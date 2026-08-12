@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agenda Spa de Uñas</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace">
+        <aside class="booking-panel" aria-label="Crear o editar cita">
+          <div class="brand">
+            <div>
+              <p class="eyebrow">NAILS LU SPA</p>
+              <h1>Agenda de citas</h1>
+            </div>
+            <span class="status-pill" id="todayLabel"></span>
+          </div>
+
+          <form id="appointmentForm" class="form-stack">
+            <input type="hidden" id="appointmentId" />
+
+            <div class="field-grid">
+              <label>
+                Cliente
+                <input id="clientName" type="text" placeholder="Nombre completo" required />
+              </label>
+              <label>
+                Teléfono
+                <input id="clientPhone" type="tel" placeholder="300 000 0000" />
+              </label>
+            </div>
+
+            <fieldset class="service-box">
+              <legend>Servicios</legend>
+              <div id="serviceList" class="service-list"></div>
+            </fieldset>
+
+            <div class="summary-strip">
+              <span id="serviceSummary">Selecciona al menos un servicio</span>
+              <strong id="totalSummary">$0 · 0 min</strong>
+            </div>
+
+            <div class="field-grid">
+              <label>
+                Fecha
+                <input id="appointmentDate" type="date" required />
+              </label>
+              <label>
+                Hora
+                <select id="appointmentTime" required></select>
+              </label>
+            </div>
+
+            <label>
+              Notas
+              <textarea id="appointmentNotes" rows="3" placeholder="Diseño, alergias, color favorito..."></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button type="submit" class="primary-action" id="submitButton">Agendar cita</button>
+              <button type="button" class="ghost-action" id="resetButton">Limpiar</button>
+            </div>
+          </form>
+        </aside>
+
+        <section class="calendar-panel" aria-label="Calendario de turnos">
+          <header class="calendar-header">
+            <div>
+              <p class="eyebrow">Calendario dinámico</p>
+              <h2 id="monthLabel"></h2>
+            </div>
+            <div class="calendar-actions">
+              <button type="button" id="prevMonth" aria-label="Mes anterior">‹</button>
+              <button type="button" id="todayButton">Hoy</button>
+              <button type="button" id="nextMonth" aria-label="Mes siguiente">›</button>
+            </div>
+          </header>
+
+          <div class="calendar-grid weekday-row" aria-hidden="true">
+            <span>Lun</span>
+            <span>Mar</span>
+            <span>Mié</span>
+            <span>Jue</span>
+            <span>Vie</span>
+            <span>Sáb</span>
+            <span>Dom</span>
+          </div>
+          <div id="calendarGrid" class="calendar-grid days-grid"></div>
+
+          <section class="day-details">
+            <div class="day-heading">
+              <div>
+                <p class="eyebrow">Turnos del día</p>
+                <h3 id="selectedDayLabel"></h3>
+              </div>
+              <span id="dayCount" class="status-pill"></span>
+            </div>
+            <div id="appointmentList" class="appointment-list"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

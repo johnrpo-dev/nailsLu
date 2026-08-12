@@ -1,0 +1,26 @@
+{
+  "name": "spa-booking-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Plataforma web/movil para agendamiento de servicios de spa de unas.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "npm run dev -w @spa/web",
+    "dev:api": "npm run start:dev -w @spa/api",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write .",
+    "db:generate": "npm run prisma -w @spa/api -- generate",
+    "db:migrate": "npm run prisma -w @spa/api -- migrate dev",
+    "db:seed": "npm run prisma -w @spa/api -- db seed"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}

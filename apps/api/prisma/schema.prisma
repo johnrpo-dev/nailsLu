@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String           @id @default(uuid())
+  email        String           @unique
+  passwordHash String?          @map("password_hash")
+  name         String
+  role         String           @default("STAFF")
+  isActive     Boolean          @default(true) @map("is_active")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  bookings     Booking[]
+  services     StaffService[]
+  blocks       AvailabilityBlock[]
+  events       BookingEvent[]
+
+  @@map("users")
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  fullName  String    @map("full_name")
+  phone     String
+  email     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  bookings  Booking[]
+
+  @@index([phone])
+  @@map("clients")
+}
+
+model Service {
+  id              String           @id @default(uuid())
+  name            String           @unique
+  description     String?
+  price           Decimal?
+  durationMinutes Int              @map("duration_minutes")
+  isActive        Boolean          @default(true) @map("is_active")
+  sortOrder       Int              @default(0) @map("sort_order")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  staff           StaffService[]
+  bookingServices BookingService[]
+
+  @@map("services")
+}
+
+model StaffService {
+  id        String  @id @default(uuid())
+  staffId   String  @map("staff_id")
+  serviceId String  @map("service_id")
+
+  staff     User    @relation(fields: [staffId], references: [id])
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  @@unique([staffId, serviceId])
+  @@map("staff_services")
+}
+
+model BusinessHour {
+  id        String  @id @default(uuid())
+  weekday   Int
+  startTime String  @map("start_time")
+  endTime   String  @map("end_time")
+  isActive  Boolean @default(true) @map("is_active")
+
+  @@unique([weekday, startTime, endTime])
+  @@map("business_hours")
+}
+
+model AvailabilityBlock {
+  id        String                @id @default(uuid())
+  staffId   String?               @map("staff_id")
+  date      DateTime
+  startTime String                @map("start_time")
+  endTime   String                @map("end_time")
+  type      String
+  reason    String?
+  createdAt DateTime              @default(now()) @map("created_at")
+
+  staff     User?                 @relation(fields: [staffId], references: [id])
+
+  @@index([date])
+  @@index([staffId, date])
+  @@map("availability_blocks")
+}
+
+model Booking {
+  id                   String          @id @default(uuid())
+  publicToken          String          @unique @map("public_token")
+  clientId             String          @map("client_id")
+  staffId              String?         @map("staff_id")
+  status               String          @default("PENDING")
+  scheduledDate        DateTime        @map("scheduled_date")
+  startTime            String          @map("start_time")
+  endTime              String          @map("end_time")
+  totalPrice           Decimal?        @map("total_price")
+  totalDurationMinutes Int             @map("total_duration_minutes")
+  notes                String?
+  source               String          @default("PUBLIC_WEB")
+  idempotencyKey       String?         @unique @map("idempotency_key")
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
+
+  client               Client          @relation(fields: [clientId], references: [id])
+  staff                User?           @relation(fields: [staffId], references: [id])
+  services             BookingService[]
+  events               BookingEvent[]
+
+  @@index([scheduledDate, startTime])
+  @@index([staffId, scheduledDate])
+  @@map("bookings")
+}
+
+model BookingService {
+  id                      String  @id @default(uuid())
+  bookingId               String  @map("booking_id")
+  serviceId               String  @map("service_id")
+  priceSnapshot           Decimal? @map("price_snapshot")
+  durationSnapshotMinutes Int     @map("duration_snapshot_minutes")
+  serviceNameSnapshot     String  @map("service_name_snapshot")
+
+  booking                 Booking @relation(fields: [bookingId], references: [id])
+  service                 Service @relation(fields: [serviceId], references: [id])
+
+  @@map("booking_services")
+}
+
+model BookingEvent {
+  id          String   @id @default(uuid())
+  bookingId   String   @map("booking_id")
+  actorUserId String?  @map("actor_user_id")
+  eventType   String   @map("event_type")
+  payload     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  actor       User?    @relation(fields: [actorUserId], references: [id])
+
+  @@index([bookingId])
+  @@map("booking_events")
+}
+
+model PublicBookingAttempt {
+  id        String   @id @default(uuid())
+  phone     String?
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, createdAt])
+  @@index([ipAddress, createdAt])
+  @@map("public_booking_attempts")
+}

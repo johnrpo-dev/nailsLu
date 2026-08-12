@@ -1,0 +1,21 @@
+node_modules
+.next
+dist
+coverage
+.turbo
+*.log
+
+# Variables de entorno: contienen los secretos JWT y la cadena de conexion.
+.env
+.env.*
+!.env.example
+
+# Base de datos local. Guarda el hash de la contrasena del panel y, en uso
+# real, nombres y telefonos de clientas. Nunca debe salir del equipo.
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Artefactos de Prisma generados en cada `prisma generate`.
+.prisma

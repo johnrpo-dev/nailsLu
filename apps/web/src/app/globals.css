@@ -1,0 +1,199 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --background: 35 40% 98%;
+  --foreground: 24 18% 10%;
+  --muted: 28 12% 42%;
+  --surface: 38 36% 96%;
+  --card: 0 0% 100%;
+  --border: 32 22% 86%;
+  --primary: 342 52% 54%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 151 20% 48%;
+  --accent-foreground: 0 0% 100%;
+  --gold: 39 55% 48%;
+  --danger: 358 62% 48%;
+  --danger-foreground: 0 0% 100%;
+  --ring: 342 52% 54%;
+  --shadow: 0 24px 70px hsl(28 24% 18% / 0.14);
+  /* Serif de alto contraste del logo. Georgia es el respaldo del sistema. */
+  --font-display: "Playfair Display", Didot, "Bodoni MT", Georgia, "Times New Roman", serif;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: 24 16% 7%;
+  --foreground: 38 34% 94%;
+  --muted: 33 12% 68%;
+  --surface: 24 16% 11%;
+  --card: 24 14% 13%;
+  --border: 28 10% 24%;
+  --primary: 346 64% 66%;
+  --primary-foreground: 24 16% 7%;
+  --accent: 154 25% 58%;
+  --accent-foreground: 24 16% 7%;
+  --gold: 42 64% 63%;
+  --danger: 358 72% 68%;
+  --danger-foreground: 24 16% 7%;
+  --ring: 346 64% 66%;
+  --shadow: 0 24px 80px hsl(0 0% 0% / 0.42);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 20% 0%, hsl(var(--primary) / 0.14), transparent 28rem),
+    radial-gradient(circle at 88% 10%, hsl(var(--accent) / 0.16), transparent 24rem),
+    hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.24);
+}
+
+.glass-panel {
+  border: 1px solid hsl(var(--border) / 0.82);
+  background: hsl(var(--card) / 0.76);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(24px);
+}
+
+.hairline {
+  border-color: hsl(var(--border) / 0.86);
+}
+
+.focus-ring {
+  outline: none;
+}
+
+/*
+ * Doble anillo: el interior separa del control y el exterior garantiza
+ * contraste sobre cualquier superficie, incluidas las traslucidas.
+ */
+.focus-ring:focus-visible {
+  box-shadow:
+    0 0 0 2px hsl(var(--background)),
+    0 0 0 4px hsl(var(--ring));
+}
+
+/*
+ * En pantallas tactiles todo control interactivo crece al minimo comodo de
+ * 44px de alto. Los tamanos compactos se justifican con raton, pero en el
+ * telefono el panel se usa con el pulgar entre clienta y clienta.
+ */
+@media (pointer: coarse) {
+  .focus-ring {
+    min-height: 44px;
+  }
+}
+
+/* Enlace de salto: visible solo cuando recibe foco por teclado. */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  transition: transform 0.18s ease-out;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/*
+ * Iconos del selector de tema. El sol solo aparece en modo oscuro. Resolverlo
+ * en CSS evita el desajuste de hidratacion que produce elegirlo en JS.
+ */
+.theme-icon-dark {
+  display: none;
+}
+
+[data-theme="dark"] .theme-icon-dark {
+  display: block;
+}
+
+[data-theme="dark"] .theme-icon-light {
+  display: none;
+}
+
+/* Animaciones del toast (Radix expone data-state; no usamos plugins extra). */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(0.75rem) scale(0.98);
+  }
+}
+
+.toast-root[data-state="open"] {
+  animation: toast-in 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.toast-root[data-state="closed"] {
+  animation: toast-out 0.16s ease-in forwards;
+}
+
+.toast-root[data-swipe="move"] {
+  transform: translateX(var(--radix-toast-swipe-move-x));
+}
+
+.toast-root[data-swipe="cancel"] {
+  transform: translateX(0);
+  transition: transform 0.2s ease-out;
+}
+
+.toast-root[data-swipe="end"] {
+  animation: toast-out 0.16s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
