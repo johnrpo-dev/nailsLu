@@ -1,0 +1,23 @@
+# Como debe tratar Git cada tipo de archivo.
+#
+# Sin esto, la regla de saltos de linea depende de la configuracion local de
+# cada equipo (core.autocrlf). Al clonar en otra maquina o compilar en un
+# servidor esa configuracion puede diferir y Git marca archivos enteros como
+# modificados sin que nadie los haya tocado. Aqui la regla queda fija.
+
+# Todo lo que sea texto se guarda y se descarga con saltos de linea LF, que es
+# lo que esperan Node, Prettier y el resto de herramientas del proyecto.
+* text=auto eol=lf
+
+# Binarios: Git no debe intentar normalizarlos ni mostrar diferencias de texto.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.svg   text eol=lf
+*.ico   binary
+*.db    binary
+
+# Generado por npm. Se marca para que GitHub lo colapse en las revisiones y no
+# entierre los cambios reales bajo miles de lineas.
+package-lock.json linguist-generated=true
