@@ -1,16 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../../../common/guards/jwt-auth.guard";
-import { PrismaService } from "../../../prisma/prisma.service";
 import { AvailabilityService } from "../application/availability.service";
 import { CreateAvailabilityBlockDto } from "./dto/create-availability-block.dto";
+import { ListBlocksQueryDto } from "./dto/list-blocks-query.dto";
 import { PublicAvailabilityQueryDto } from "./dto/public-availability-query.dto";
+import { ReplaceBusinessHoursDto } from "./dto/replace-business-hours.dto";
 
 @Controller()
 export class AvailabilityController {
-  constructor(
-    private readonly availability: AvailabilityService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly availability: AvailabilityService) {}
 
   @Get("public/availability")
   listPublic(@Query() query: PublicAvailabilityQueryDto) {
@@ -24,23 +22,32 @@ export class AvailabilityController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get("admin/availability/blocks")
+  listBlocks(@Query() query: ListBlocksQueryDto) {
+    return this.availability.listBlocks(query);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post("admin/availability/blocks")
   createBlock(@Body() dto: CreateAvailabilityBlockDto) {
-    return this.prisma.availabilityBlock.create({
-      data: {
-        staffId: dto.staffId,
-        date: new Date(`${dto.date}T00:00:00.000Z`),
-        startTime: dto.startTime,
-        endTime: dto.endTime,
-        type: dto.type,
-        reason: dto.reason,
-      },
-    });
+    return this.availability.createBlock(dto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete("admin/availability/blocks/:id")
   deleteBlock(@Param("id") id: string) {
-    return this.prisma.availabilityBlock.delete({ where: { id } });
+    return this.availability.deleteBlock(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("admin/business-hours")
+  listBusinessHours() {
+    return this.availability.listBusinessHours();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put("admin/business-hours")
+  replaceBusinessHours(@Body() dto: ReplaceBusinessHoursDto) {
+    return this.availability.replaceBusinessHours(dto.hours);
   }
 }

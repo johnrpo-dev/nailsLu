@@ -41,14 +41,17 @@ En `http://localhost:3000/admin`, con las credenciales del seed.
   Permite confirmar, marcar como atendida y cancelar. El telefono abre WhatsApp.
 - **Servicios**: crear, editar nombre, descripcion y duracion, y ocultar o
   mostrar en el sitio publico. Ocultar es borrado logico: conserva el historial.
+- **Disponibilidad**: horario base semanal (que dias se abre y a que horas) y
+  excepciones por fecha para cerrar un festivo o una tarde suelta, o para abrir
+  un dia que normalmente no se atiende. Las excepciones mandan sobre el horario
+  base.
 
 Los servicios no llevan precio: la tarifa se acuerda con cada clienta.
 
 ## Estado actual
 
 - Flujo publico de reserva: completo y funcionando contra la API.
-- Panel: reservas y servicios operativos. Falta la seccion de disponibilidad
-  (horarios base y bloqueos), que hoy solo existe como endpoints en la API.
+- Panel: reservas, servicios y disponibilidad operativos.
 - La sesion del panel dura 12 horas (`JWT_ACCESS_TTL`). No hay refresh tokens,
   asi que al vencer hay que volver a entrar.
 - Sin tests ni configuracion de ESLint todavia, asi que `npm run lint` no corre.

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CalendarDays, ExternalLink, LogOut, Scissors } from "lucide-react";
+import { CalendarClock, CalendarDays, ExternalLink, LogOut, Scissors } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +13,7 @@ import { useAdminSession } from "./admin-session-provider";
 const SECCIONES = [
   { href: "/admin/bookings", etiqueta: "Reservas", icono: CalendarDays },
   { href: "/admin/services", etiqueta: "Servicios", icono: Scissors },
+  { href: "/admin/availability", etiqueta: "Disponibilidad", icono: CalendarClock },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
@@ -60,7 +61,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <nav aria-label="Secciones del panel" className="mt-4 flex gap-2">
+      {/* Con tres secciones las pestanas ya no caben en 375px: deben envolver. */}
+      <nav aria-label="Secciones del panel" className="mt-4 flex flex-wrap gap-2">
         {SECCIONES.map(({ href, etiqueta, icono: Icono }) => {
           const activa = pathname === href;
           return (

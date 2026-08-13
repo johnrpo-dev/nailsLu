@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { ThrottlerModule } from "@nestjs/throttler";
+import { APP_GUARD } from "@nestjs/core";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AuthModule } from "./modules/auth/auth.module";
 import { AvailabilityModule } from "./modules/availability/availability.module";
 import { BookingsModule } from "./modules/bookings/bookings.module";
@@ -13,12 +14,12 @@ import { PrismaModule } from "./prisma/prisma.module";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: Number(process.env.PUBLIC_BOOKING_RATE_LIMIT_TTL_SECONDS ?? 60) * 1000,
-        limit: Number(process.env.PUBLIC_BOOKING_RATE_LIMIT_MAX ?? 5),
-      },
-    ]),
+    /**
+     * Limite general holgado: cubre navegacion normal y el panel, que consulta
+     * la agenda con frecuencia. Los endpoints sensibles (crear reserva, login)
+     * aprietan la tuerca con su propio `@Throttle`.
+     */
+    ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 120 }]),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -27,6 +28,14 @@ import { PrismaModule } from "./prisma/prisma.module";
     AvailabilityModule,
     BookingsModule,
     NotificationsModule,
+  ],
+  providers: [
+    /**
+     * Sin este proveedor NestJS nunca ejecuta el guard y los `@Throttle` de los
+     * controladores son decorativos: el endpoint publico aceptaba peticiones
+     * ilimitadas pese a que el README prometia rate limiting.
+     */
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule {}

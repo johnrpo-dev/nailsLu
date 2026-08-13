@@ -115,6 +115,17 @@ a {
   .focus-ring {
     min-height: 44px;
   }
+
+  /* Las casillas nativas son de 20px. Se agrandan y la etiqueta que las
+     envuelve pasa a ser un area de toque completa. */
+  input[type="checkbox"] {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  label:has(> input[type="checkbox"]) {
+    min-height: 44px;
+  }
 }
 
 /* Enlace de salto: visible solo cuando recibe foco por teclado. */

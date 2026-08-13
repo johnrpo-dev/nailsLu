@@ -49,6 +49,11 @@ DELETE /admin/services/:id
 
 GET    /admin/bookings?scope=active|today|all&date=2026-08-20
 PATCH  /admin/bookings/:id/status
+GET    /admin/availability/blocks?from=2026-08-20&to=2026-09-30
+POST   /admin/availability/blocks
+DELETE /admin/availability/blocks/:id
+GET    /admin/business-hours
+PUT    /admin/business-hours
 
 GET    /admin/availability
 PUT    /admin/business-hours

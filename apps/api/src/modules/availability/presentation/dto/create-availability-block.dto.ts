@@ -1,4 +1,6 @@
-import { IsDateString, IsIn, IsOptional, IsString } from "class-validator";
+import { IsDateString, IsIn, IsOptional, IsString, Length, Matches } from "class-validator";
+
+const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export class CreateAvailabilityBlockDto {
   @IsOptional()
@@ -8,16 +10,18 @@ export class CreateAvailabilityBlockDto {
   @IsDateString()
   date!: string;
 
-  @IsString()
+  @Matches(HORA, { message: "startTime debe tener formato HH:MM" })
   startTime!: string;
 
-  @IsString()
+  @Matches(HORA, { message: "endTime debe tener formato HH:MM" })
   endTime!: string;
 
+  /** BLOCKED cierra una franja; AVAILABLE abre una fuera del horario base. */
   @IsIn(["AVAILABLE", "BLOCKED"])
   type!: "AVAILABLE" | "BLOCKED";
 
   @IsOptional()
   @IsString()
+  @Length(0, 140)
   reason?: string;
 }

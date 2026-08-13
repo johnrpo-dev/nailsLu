@@ -19,3 +19,6 @@ coverage
 
 # Artefactos de Prisma generados en cada `prisma generate`.
 .prisma
+
+# Cache incremental de TypeScript.
+*.tsbuildinfo

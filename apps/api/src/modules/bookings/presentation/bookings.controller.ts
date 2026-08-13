@@ -11,7 +11,13 @@ import { UpdateBookingStatusDto } from "./dto/update-booking-status.dto";
 export class BookingsController {
   constructor(private readonly bookings: BookingsService) {}
 
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  // Limite estricto del formulario publico, configurable por entorno.
+  @Throttle({
+    default: {
+      limit: Number(process.env.PUBLIC_BOOKING_RATE_LIMIT_MAX ?? 5),
+      ttl: Number(process.env.PUBLIC_BOOKING_RATE_LIMIT_TTL_SECONDS ?? 60) * 1000,
+    },
+  })
   @Post("public/bookings")
   createPublic(
     @Body() dto: CreatePublicBookingDto,
