@@ -45,8 +45,9 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 
 En `apps/api/.env`:
 
-- `JWT_ACCESS_SECRET` y `JWT_REFRESH_SECRET`: los valores generados. **Dejar los
-  de ejemplo permitiria a cualquiera fabricarse un token y entrar al panel.**
+- `JWT_ACCESS_SECRET`: el valor generado, y distinto del que uses en local.
+  **Dejar el de ejemplo permitiria a cualquiera fabricarse un token y entrar al
+  panel sin contrasena**, porque ese valor esta publicado en el repositorio.
 - `WEB_ORIGIN="https://nailslu.com,https://www.nailslu.com"`
 - `TRUST_PROXY="1"` porque Caddy va delante.
 - `DATABASE_URL="file:./prisma/produccion.db"`
