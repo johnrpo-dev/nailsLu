@@ -14,6 +14,10 @@ const CAMPOS_PUBLICOS = {
   durationMinutes: true,
   isActive: true,
   sortOrder: true,
+  imageUrl: true,
+  imageFocalX: true,
+  imageFocalY: true,
+  imageScale: true,
 } as const;
 
 @Injectable()

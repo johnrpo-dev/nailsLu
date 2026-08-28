@@ -7,6 +7,7 @@ import type { ServiceSummary } from "@spa/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/shared/lib/format";
+import { estiloDeEncuadre, urlDeFoto } from "@/shared/lib/service-image";
 
 export function ServiceDetailsDialog({
   open,
@@ -51,6 +52,17 @@ export function ServiceDetailsDialog({
                     </Button>
                   </Dialog.Close>
                 </div>
+                {urlDeFoto(service.imageUrl) ? (
+                  <div className="mt-5 aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-[hsl(var(--surface))]">
+                    <img
+                      alt={service.name}
+                      className="size-full object-cover"
+                      src={urlDeFoto(service.imageUrl) as string}
+                      style={estiloDeEncuadre(service)}
+                    />
+                  </div>
+                ) : null}
+
                 <Dialog.Description className="mt-4 text-sm leading-7 text-[hsl(var(--muted))]">
                   {service.description ??
                     "Servicio realizado con preparación cuidadosa, acabado limpio y seguimiento de disponibilidad en tiempo real."}

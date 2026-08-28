@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
 import { formatDuration } from "@/shared/lib/format";
+import { readToken } from "@/features/admin-auth/services/auth-storage";
+import { removeServiceImage, uploadServiceImage } from "../services/services-admin-api";
+import { ImageFramer, type Encuadre } from "./image-framer";
 import type { AdminService, ServiceInput } from "../services/services-admin-api";
 
 /** Duraciones habituales del salon, para no teclear el numero cada vez. */
@@ -29,6 +32,9 @@ export function ServiceFormDialog({
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [encuadre, setEncuadre] = useState<Encuadre>({ imageFocalX: 50, imageFocalY: 50, imageScale: 100 });
+  const [subiendo, setSubiendo] = useState(false);
 
   // Al abrir se recarga el formulario con el servicio en edicion (o en blanco).
   useEffect(() => {
@@ -36,6 +42,12 @@ export function ServiceFormDialog({
     setName(service?.name ?? "");
     setDescription(service?.description ?? "");
     setDurationMinutes(service?.durationMinutes ?? 60);
+    setImageUrl(service?.imageUrl ?? null);
+    setEncuadre({
+      imageFocalX: service?.imageFocalX ?? 50,
+      imageFocalY: service?.imageFocalY ?? 50,
+      imageScale: service?.imageScale ?? 100,
+    });
     setError("");
   }, [open, service]);
 
@@ -58,6 +70,7 @@ export function ServiceFormDialog({
         name: name.trim(),
         description: description.trim() || undefined,
         durationMinutes,
+        ...encuadre,
       });
       onOpenChange(false);
     } catch (caught) {
@@ -139,6 +152,49 @@ export function ServiceFormDialog({
                 ))}
               </div>
             </div>
+
+            {service ? (
+              <ImageFramer
+                encuadre={encuadre}
+                imageUrl={imageUrl}
+                ocupado={subiendo}
+                onEncuadreChange={setEncuadre}
+                onQuitar={async () => {
+                  setSubiendo(true);
+                  setError("");
+                  try {
+                    const actualizado = await removeServiceImage(service.id);
+                    setImageUrl(actualizado.imageUrl ?? null);
+                    setEncuadre({ imageFocalX: 50, imageFocalY: 50, imageScale: 100 });
+                  } catch {
+                    setError("No pudimos quitar la foto.");
+                  } finally {
+                    setSubiendo(false);
+                  }
+                }}
+                onSubir={async (file) => {
+                  setSubiendo(true);
+                  setError("");
+                  try {
+                    const actualizado = await uploadServiceImage(service.id, file, readToken());
+                    setImageUrl(actualizado.imageUrl ?? null);
+                    setEncuadre({
+                      imageFocalX: actualizado.imageFocalX ?? 50,
+                      imageFocalY: actualizado.imageFocalY ?? 50,
+                      imageScale: actualizado.imageScale ?? 100,
+                    });
+                  } catch (caught) {
+                    setError(caught instanceof Error ? caught.message : "No pudimos subir la foto.");
+                  } finally {
+                    setSubiendo(false);
+                  }
+                }}
+              />
+            ) : (
+              <p className="rounded-2xl bg-[hsl(var(--surface)/0.7)] p-3 text-sm leading-6 text-[hsl(var(--muted))]">
+                Crea el servicio primero y luego podrás subirle una foto desde aquí.
+              </p>
+            )}
 
             {error ? (
               <p

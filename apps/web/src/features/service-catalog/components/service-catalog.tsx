@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/shared/lib/cn";
+import { estiloDeEncuadre, urlDeFoto } from "@/shared/lib/service-image";
 import { formatDuration } from "@/shared/lib/format";
 import type { ServicesStatus } from "../hooks/use-services";
 import { ServiceDetailsDialog } from "./service-details-dialog";
@@ -95,12 +96,29 @@ export function ServiceCatalog({
                   reducedMotion ? { duration: 0 } : { delay: Math.min(index * 0.05, 0.3), duration: 0.34, ease: "easeOut" }
                 }
               >
-                <div
-                  aria-hidden="true"
-                  className="absolute right-4 top-4 text-[hsl(var(--primary)/0.16)] transition duration-300 group-hover:scale-110 group-hover:text-[hsl(var(--primary)/0.24)]"
-                >
-                  <Gem className="size-12" />
-                </div>
+                {urlDeFoto(service.imageUrl) ? (
+                  /*
+                   * La foto es el producto en un spa de unas: manda sobre el
+                   * texto. Formato 4:5, el vertical de Instagram, que es donde
+                   * la clienta tiene el ojo entrenado.
+                   */
+                  <div className="relative -m-4 mb-4 aspect-[4/5] overflow-hidden rounded-t-[1.75rem] bg-[hsl(var(--surface))]">
+                    <img
+                      alt={service.name}
+                      className="size-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                      loading="lazy"
+                      src={urlDeFoto(service.imageUrl) as string}
+                      style={estiloDeEncuadre(service)}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    aria-hidden="true"
+                    className="absolute right-4 top-4 text-[hsl(var(--primary)/0.16)] transition duration-300 group-hover:scale-110 group-hover:text-[hsl(var(--primary)/0.24)]"
+                  >
+                    <Gem className="size-12" />
+                  </div>
+                )}
                 <div className="relative">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge>

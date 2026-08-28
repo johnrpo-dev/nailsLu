@@ -4,6 +4,7 @@ import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
+import { CARPETA_SUBIDAS } from "./modules/services/application/service-images.service";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -23,14 +24,39 @@ async function bootstrap() {
     app.set("trust proxy", /^\d+$/.test(proxies) ? Number(proxies) : proxies);
   }
 
-  app.use(helmet());
+  /**
+   * `crossOriginResourcePolicy` por defecto es "same-origin" y bloquearia que
+   * la web cargue las fotos servidas desde el API, que corre en otro puerto.
+   */
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
   /**
    * En produccion `WEB_ORIGIN` debe listar los dominios del sitio. Si falta,
    * se acepta cualquier origen, que solo es aceptable en desarrollo.
+   *
+   * Va ANTES de los archivos estaticos: registrado despues, las respuestas de
+   * las fotos no pasarian por su middleware y saldrian sin cabeceras CORS.
    */
   const origenes = config.get<string>("WEB_ORIGIN")?.split(",").map((o) => o.trim());
   app.enableCors({ origin: origenes ?? true, credentials: true });
+
+  /**
+   * Fotos de los servicios. Se sirven desde disco y no desde `dist`, para que
+   * sobrevivan a cada compilacion. Cache larga porque el nombre del archivo
+   * cambia en cada subida: si la foto cambia, cambia la URL.
+   *
+   * Las cabeceras se fijan aqui ademas del middleware global, porque
+   * `express.static` responde y corta la cadena antes de llegar a el.
+   */
+  app.useStaticAssets(CARPETA_SUBIDAS, {
+    prefix: "/uploads/",
+    maxAge: "365d",
+    immutable: true,
+    setHeaders: (res) => {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      res.setHeader("Access-Control-Allow-Origin", origenes?.[0] ?? "*");
+    },
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({

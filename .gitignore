@@ -24,3 +24,5 @@ coverage
 *.tsbuildinfo
 
 backups/
+
+uploads/

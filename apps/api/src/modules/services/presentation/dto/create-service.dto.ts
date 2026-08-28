@@ -27,4 +27,23 @@ export class CreateServiceDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  // Encuadre de la foto. El archivo se sube por su propio endpoint.
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  imageFocalX?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  imageFocalY?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(60)
+  @Max(250)
+  imageScale?: number;
 }

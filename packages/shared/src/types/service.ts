@@ -10,4 +10,11 @@ export type ServiceSummary = {
   description?: string | null;
   durationMinutes: number;
   isActive: boolean;
+  /** Ruta relativa al API, por ejemplo `/uploads/abc.webp`. */
+  imageUrl?: string | null;
+  /** Punto focal del recorte, 0-100 en cada eje. Centro por defecto. */
+  imageFocalX?: number;
+  imageFocalY?: number;
+  /** 100 llena la tarjeta; menos deja aire, mas acerca. */
+  imageScale?: number;
 };

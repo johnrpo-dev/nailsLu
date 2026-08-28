@@ -46,6 +46,20 @@ model Service {
   durationMinutes Int              @map("duration_minutes")
   isActive        Boolean          @default(true) @map("is_active")
   sortOrder       Int              @default(0) @map("sort_order")
+
+  /**
+   * Foto del servicio y su encuadre.
+   *
+   * Las fotos de unas son primeros planos y el diseno rara vez cae en el
+   * centro, asi que un recorte fijo cortaria justo lo que se quiere mostrar.
+   * El punto focal (0-100 en cada eje) y la escala permiten reencuadrar sin
+   * volver a subir la imagen ni tocar el archivo original.
+   */
+  imageUrl        String?          @map("image_url")
+  imageFocalX     Int              @default(50) @map("image_focal_x")
+  imageFocalY     Int              @default(50) @map("image_focal_y")
+  /** Porcentaje: 100 llena la tarjeta, menos deja aire, mas acerca. */
+  imageScale      Int              @default(100) @map("image_scale")
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
 
