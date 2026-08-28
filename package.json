@@ -16,10 +16,12 @@
     "format": "prettier --write .",
     "db:generate": "npm run prisma -w @spa/api -- generate",
     "db:migrate": "npm run prisma -w @spa/api -- migrate dev",
-    "db:seed": "npm run prisma -w @spa/api -- db seed"
+    "db:seed": "npm run prisma -w @spa/api -- db seed",
+    "start": "concurrently \"npm run start -w @spa/web\" \"npm run start -w @spa/api\"",
+    "db:deploy": "npm run db:deploy -w @spa/api"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
+    "concurrently": "^10.0.5",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"
   }
