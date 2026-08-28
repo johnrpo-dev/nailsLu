@@ -14,11 +14,24 @@ const prisma = new PrismaClient({
   }),
 });
 
+/**
+ * Catalogo real de NAILS LU SPA.
+ *
+ * Las duraciones definen que franjas se ofrecen, asi que conviene revisarlas
+ * contra el tiempo real de cada servicio y ajustarlas desde el panel.
+ */
 const SERVICIOS = [
-  ["Manicure clásico", "Limpieza, limado y esmaltado tradicional.", 45, 1],
-  ["Semipermanente", "Esmaltado de larga duración con acabado brillante.", 60, 2],
-  ["Uñas acrílicas", "Extensión y diseño de uñas acrílicas.", 120, 3],
-  ["Pedicure spa", "Pedicure completo con exfoliación e hidratación.", 70, 4],
+  ["Semipermanente manos", "Esmaltado semipermanente en manos.", 90, 1],
+  ["Semipermanente pies", "Esmaltado semipermanente en pies.", 60, 2],
+  ["Base rubber", "Base niveladora rubber para dar resistencia a la uña natural.", 90, 3],
+  ["Builder gel", "Refuerzo con gel constructor sobre uña natural.", 120, 4],
+  ["Acrílicas", "Extensión con acrílico y diseño a elección.", 150, 5],
+  ["Forrado acrílico", "Forrado de la uña natural con acrílico.", 120, 6],
+  ["Poly gel esculpido", "Esculpido completo en poly gel.", 150, 7],
+  ["Forrado poly gel", "Forrado de la uña natural con poly gel.", 120, 8],
+  ["Dipping", "Sistema de inmersión en polvo.", 90, 9],
+  ["Press on", "Uñas postizas preparadas y colocadas.", 60, 10],
+  ["Retiro con limpieza", "Retiro de producto con limpieza y cuidado de cutícula.", 45, 11],
 ] as const;
 
 async function main() {
