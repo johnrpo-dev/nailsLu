@@ -47,7 +47,8 @@ export function AvailabilityManager() {
       <div>
         <h1 className="text-2xl font-black tracking-tight">Disponibilidad</h1>
         <p className="mt-1 max-w-prose text-sm text-[hsl(var(--muted))]">
-          Define cuándo atiendes. Las clientas solo ven horarios que caben aquí y que no chocan con otra reserva.
+          Define cuándo atiendes. Las clientas solo ven horas libres dentro de tu jornada que no choquen con
+          otra reserva.
         </p>
       </div>
 

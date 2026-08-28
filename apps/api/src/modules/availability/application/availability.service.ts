@@ -55,10 +55,19 @@ export class AvailabilityService {
     const bloqueados = blocks.filter((b) => b.type === AvailabilityBlockType.BLOCKED);
     const slots = new Set<string>();
 
+    /**
+     * `endTime` es la hora de la ULTIMA CITA que se acepta, no la hora a la que
+     * todo debe estar terminado.
+     *
+     * Antes se exigia que el servicio cupiera completo antes del cierre, asi
+     * que con cierre a las 18:00 un servicio de una hora dejaba de ofrecerse a
+     * las 17:01. En el salon no funciona asi: a las 18:00 se toma la ultima
+     * clienta y se termina cuando toque.
+     */
     for (const ventana of ventanas) {
       for (
         let cursor = minutesFromTime(ventana.startTime);
-        cursor + query.durationMinutes <= minutesFromTime(ventana.endTime);
+        cursor <= minutesFromTime(ventana.endTime);
         cursor += 30
       ) {
         const startTime = timeFromMinutes(cursor);

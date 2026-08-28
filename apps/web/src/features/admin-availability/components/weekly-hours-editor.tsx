@@ -84,7 +84,8 @@ export function WeeklyHoursEditor({
         <div>
           <h2 className="text-lg font-black tracking-tight">Horario base</h2>
           <p className="mt-1 max-w-prose text-sm leading-6 text-[hsl(var(--muted))]">
-            Los días y horas en que atiendes normalmente. De aquí salen las franjas que ven las clientas.
+            La segunda hora es la <strong className="text-[hsl(var(--foreground))]">última cita</strong> que
+            aceptas, no la hora de cerrar: un servicio que empiece a esa hora puede terminar después.
           </p>
         </div>
         <Button disabled={!hayCambios || guardando || invalidas.length > 0} onClick={guardar} type="button">
@@ -119,15 +120,15 @@ export function WeeklyHoursEditor({
               {fila.abierto ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <input
-                    aria-label={`Hora de apertura ${fila.nombre}`}
+                    aria-label={`Primera cita del ${fila.nombre}`}
                     className={horaClass(malRango)}
                     onChange={(event) => actualizar(fila.weekday, { startTime: event.target.value })}
                     type="time"
                     value={fila.startTime}
                   />
-                  <span className="text-sm text-[hsl(var(--muted))]">a</span>
+                  <span className="text-sm text-[hsl(var(--muted))]">hasta</span>
                   <input
-                    aria-label={`Hora de cierre ${fila.nombre}`}
+                    aria-label={`Última cita del ${fila.nombre}`}
                     className={horaClass(malRango)}
                     onChange={(event) => actualizar(fila.weekday, { endTime: event.target.value })}
                     type="time"
@@ -135,7 +136,7 @@ export function WeeklyHoursEditor({
                   />
                   {malRango ? (
                     <span className="text-xs font-semibold text-[hsl(var(--danger))]">
-                      El cierre debe ser después de la apertura
+                      La última cita debe ser después de la primera
                     </span>
                   ) : null}
                 </div>

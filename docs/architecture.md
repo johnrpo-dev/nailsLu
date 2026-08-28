@@ -24,6 +24,11 @@ Separar claramente experiencia publica, panel administrativo, reglas de negocio 
 ## Principios
 
 - El calendario del frontend nunca decide disponibilidad final.
+- La hora de fin del horario base es la **ultima cita que se acepta**, no la
+  hora a la que todo debe estar terminado. Un servicio que empieza a esa hora
+  puede extenderse mas alla: en el salon se toma la ultima clienta y se termina
+  cuando toque. Exigir que el servicio cupiera completo antes del cierre
+  adelantaba la ultima franja tanto como durara el servicio.
 - Crear una reserva siempre recalcula disponibilidad en backend.
 - Las reservas guardan snapshot de servicios para preservar historico.
 - Endpoints publicos aceptan datos minimos y se protegen con rate limit, honeypot e idempotencia.
