@@ -112,7 +112,13 @@ a {
  * telefono el panel se usa con el pulgar entre clienta y clienta.
  */
 @media (pointer: coarse) {
-  .focus-ring {
+  /*
+   * Piso de 44px, no techo. Esta regla va fuera de las capas de Tailwind, asi
+   * que gana a las utilidades `min-h-*`; sin la exclusion encogeria a 44px los
+   * controles que piden 48 a proposito. Si se anade un tamano mayor a
+   * `min-h-12`, hay que excluirlo aqui tambien.
+   */
+  .focus-ring:not(.min-h-12) {
     min-height: 44px;
   }
 

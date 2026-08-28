@@ -48,6 +48,22 @@ En `http://localhost:3000/admin`, con las credenciales del seed.
 
 Los servicios no llevan precio: la tarifa se acuerda con cada clienta.
 
+## Aviso por WhatsApp
+
+Al terminar la reserva, la clienta ve un boton que abre WhatsApp con el mensaje
+ya redactado hacia el numero del spa. No requiere API, tramites con Meta ni
+numero dedicado, y el aviso llega al WhatsApp de siempre.
+
+Se configura con `NEXT_PUBLIC_WHATSAPP_NUMBER` en `apps/web/.env.local`, con
+indicativo de pais y sin signos (por ejemplo `573001234567`). Si la variable
+falta, el boton simplemente no aparece.
+
+Es una comodidad, no la fuente de verdad: la reserva queda guardada aunque la
+clienta nunca pulse el boton, y el panel siempre la muestra. Para envio
+automatico sin depender de la clienta hace falta la API oficial de WhatsApp
+Business, que exige verificacion del negocio, plantillas aprobadas y un numero
+que no pueda usarse en la aplicacion normal.
+
 ## Estado actual
 
 - Flujo publico de reserva: completo y funcionando contra la API.

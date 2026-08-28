@@ -2,13 +2,14 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CalendarCheck, Check, Clock3, Copy, X } from "lucide-react";
+import { CalendarCheck, Check, Clock3, Copy, MessageCircle, X } from "lucide-react";
 import { useState } from "react";
 import type { PublicBookingResult } from "@spa/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatLongDate } from "@/shared/lib/date";
 import { formatDuration } from "@/shared/lib/format";
+import { construirAvisoReserva, hayWhatsappConfigurado } from "@/shared/lib/whatsapp";
 
 export function BookingConfirmationDialog({
   booking,
@@ -115,8 +116,34 @@ export function BookingConfirmationDialog({
                   </div>
                 </div>
 
+                {hayWhatsappConfigurado() ? (
+                  <div className="mt-6 grid gap-2">
+                    <Button asChild className="w-full" size="lg">
+                      <a
+                        href={construirAvisoReserva({
+                          clientName: booking.client.fullName,
+                          phone: formatPhoneDisplay(booking.client.phone),
+                          fechaLarga: formatLongDate(booking.scheduledDate.slice(0, 10)),
+                          startTime: booking.startTime,
+                          endTime: booking.endTime,
+                          servicios: booking.services.map((s) => s.serviceNameSnapshot),
+                          publicToken: booking.publicToken,
+                        })}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        <MessageCircle aria-hidden="true" className="size-4" />
+                        Avisarnos por WhatsApp
+                      </a>
+                    </Button>
+                    <p className="text-center text-xs leading-5 text-[hsl(var(--muted))]">
+                      Tu reserva ya quedó registrada. Esto solo nos avisa más rápido.
+                    </p>
+                  </div>
+                ) : null}
+
                 <Dialog.Close asChild>
-                  <Button className="mt-6 w-full" size="lg" type="button">
+                  <Button className="mt-3 w-full" size="lg" type="button" variant="secondary">
                     Listo
                   </Button>
                 </Dialog.Close>
