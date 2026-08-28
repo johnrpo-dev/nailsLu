@@ -48,6 +48,10 @@ npm run dev
 Web en `http://localhost:3000`, API en `http://localhost:3001`.
 Credenciales del seed: `admin@spa.local` / `Admin12345!`.
 
+**Esa contrasena esta en `prisma/seed.ts`, que es publico.** Al entrar, el panel
+avisa y enlaza a "Tu cuenta" para cambiarla. El aviso desaparece solo cuando se
+cambia. Hasta entonces, cualquiera que lea el repositorio puede entrar.
+
 ## Panel de administracion
 
 En `http://localhost:3000/admin`, con las credenciales del seed.

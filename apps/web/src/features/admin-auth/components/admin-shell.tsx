@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CalendarClock, CalendarDays, ExternalLink, LogOut, Scissors } from "lucide-react";
+import { AlertCircle, CalendarClock, CalendarDays, ExternalLink, LogOut, Scissors, UserCog } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,10 +14,11 @@ const SECCIONES = [
   { href: "/admin/bookings", etiqueta: "Reservas", icono: CalendarDays },
   { href: "/admin/services", etiqueta: "Servicios", icono: Scissors },
   { href: "/admin/availability", etiqueta: "Disponibilidad", icono: CalendarClock },
+  { href: "/admin/cuenta", etiqueta: "Tu cuenta", icono: UserCog },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
-  const { user, ready, logout } = useAdminSession();
+  const { user, ready, logout, usingDefaultPassword } = useAdminSession();
   const pathname = usePathname();
   const router = useRouter();
   const esLogin = pathname === "/admin/login";
@@ -83,6 +84,19 @@ export function AdminShell({ children }: { children: ReactNode }) {
           );
         })}
       </nav>
+
+      {usingDefaultPassword && pathname !== "/admin/cuenta" ? (
+        <Link
+          className="focus-ring mt-4 flex items-start gap-3 rounded-3xl border border-[hsl(var(--danger)/0.4)] bg-[hsl(var(--danger)/0.08)] p-4 transition hover:border-[hsl(var(--danger)/0.7)]"
+          href="/admin/cuenta"
+        >
+          <AlertCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[hsl(var(--danger))]" />
+          <span className="text-sm leading-6">
+            <strong className="font-bold">Estás usando la contraseña de ejemplo.</strong> Viene en el
+            código público del proyecto, así que cualquiera podría entrar aquí. Toca para cambiarla.
+          </span>
+        </Link>
+      ) : null}
 
       <main className="mt-6">{children}</main>
     </div>

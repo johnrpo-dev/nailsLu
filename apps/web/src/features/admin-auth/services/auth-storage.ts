@@ -10,6 +10,8 @@ export type AdminUser = {
 type StoredSession = {
   accessToken: string;
   user: AdminUser;
+  /** El API lo marca cuando se entro con la contrasena del seed, que es publica. */
+  usingDefaultPassword?: boolean;
 };
 
 const STORAGE_KEY = "spa-admin-session";

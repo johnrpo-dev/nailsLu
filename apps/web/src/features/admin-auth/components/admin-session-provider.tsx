@@ -15,6 +15,10 @@ import { clearSession, readSession, readToken, writeSession, type AdminUser } fr
 
 type SessionState = {
   user: AdminUser | null;
+  /** Cierto mientras siga en uso la contrasena publicada del seed. */
+  usingDefaultPassword: boolean;
+  /** Lo llama la pantalla de cuenta al cambiarla, para retirar el aviso. */
+  markPasswordChanged: () => void;
   /** Falso hasta que se lee el almacenamiento, para no parpadear al login. */
   ready: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -23,6 +27,8 @@ type SessionState = {
 
 const AdminSessionContext = createContext<SessionState>({
   user: null,
+  usingDefaultPassword: false,
+  markPasswordChanged: () => undefined,
   ready: false,
   login: async () => undefined,
   logout: () => undefined,
@@ -34,21 +40,32 @@ setAuthTokenProvider(readToken);
 
 export function AdminSessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AdminUser | null>(null);
+  const [usingDefaultPassword, setUsingDefault] = useState(false);
   const [ready, setReady] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    setUser(readSession()?.user ?? null);
+    const sesion = readSession();
+    setUser(sesion?.user ?? null);
+    setUsingDefault(Boolean(sesion?.usingDefaultPassword));
     setReady(true);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const result = await apiPost<{ accessToken: string; user: AdminUser }>("/auth/login", {
-      email,
-      password,
-    });
+    const result = await apiPost<{
+      accessToken: string;
+      user: AdminUser;
+      usingDefaultPassword?: boolean;
+    }>("/auth/login", { email, password });
     writeSession(result);
     setUser(result.user);
+    setUsingDefault(Boolean(result.usingDefaultPassword));
+  }, []);
+
+  const markPasswordChanged = useCallback(() => {
+    const sesion = readSession();
+    if (sesion) writeSession({ ...sesion, usingDefaultPassword: false });
+    setUsingDefault(false);
   }, []);
 
   const logout = useCallback(() => {
@@ -67,7 +84,10 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("api-unauthorized", onUnauthorized);
   }, [logout]);
 
-  const value = useMemo(() => ({ user, ready, login, logout }), [login, logout, ready, user]);
+  const value = useMemo(
+    () => ({ user, usingDefaultPassword, markPasswordChanged, ready, login, logout }),
+    [login, logout, markPasswordChanged, ready, user, usingDefaultPassword],
+  );
 
   return <AdminSessionContext.Provider value={value}>{children}</AdminSessionContext.Provider>;
 }

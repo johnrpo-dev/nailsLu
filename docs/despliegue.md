@@ -66,8 +66,9 @@ sudo -u nailslu npm run db:seed     # solo la primera vez: crea la cuenta admin
 sudo -u nailslu npm run build
 ```
 
-Tras el seed, **entrar al panel y cambiar la contrasena del admin**, que en el
-seed es publica (`Admin12345!`).
+Tras el seed, **entrar al panel y cambiar la contrasena** en "Tu cuenta". La del
+seed (`Admin12345!`) esta publicada en el repositorio. Mientras siga en uso, el
+panel muestra un aviso en todas las pantallas.
 
 ## 5. Servicios y servidor web
 

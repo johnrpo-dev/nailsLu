@@ -1,6 +1,7 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import bcrypt from "bcrypt";
+import { CONTRASENA_POR_DEFECTO } from "../../../common/default-password";
 import { PrismaService } from "../../../prisma/prisma.service";
 
 @Injectable()
@@ -42,6 +43,38 @@ export class AuthService {
         name: user.name,
         role: user.role,
       },
+      /**
+       * El panel avisa mientras siga la contrasena del archivo de datos
+       * iniciales, que esta publicada. Se compara con la que acaba de escribir,
+       * asi no hace falta guardar ninguna marca en la base.
+       */
+      usingDefaultPassword: password === CONTRASENA_POR_DEFECTO,
     };
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.passwordHash) {
+      throw new UnauthorizedException("Usuario no encontrado");
+    }
+
+    const valida = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valida) {
+      throw new UnauthorizedException("La contraseña actual no es correcta");
+    }
+
+    if (newPassword === CONTRASENA_POR_DEFECTO) {
+      throw new BadRequestException("Esa contraseña es la de ejemplo y es publica. Elige otra.");
+    }
+    if (newPassword === currentPassword) {
+      throw new BadRequestException("La contraseña nueva debe ser distinta de la actual");
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: await bcrypt.hash(newPassword, 12) },
+    });
+
+    return { ok: true };
   }
 }
