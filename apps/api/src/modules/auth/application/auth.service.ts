@@ -25,9 +25,16 @@ export class AuthService {
     return {
       accessToken: await this.jwt.signAsync(payload, {
         secret: process.env.JWT_ACCESS_SECRET,
-        // Sin refresh tokens implementados, 15 minutos obligaria a la dueña a
-        // volver a entrar a media jornada. Una sesion de trabajo es mas util.
-        expiresIn: process.env.JWT_ACCESS_TTL ?? "12h",
+        /**
+         * Sin refresh tokens implementados, 15 minutos obligaria a la dueña a
+         * volver a entrar a media jornada. Una sesion de trabajo es mas util.
+         *
+         * El tipo de `expiresIn` es un literal de plantilla del paquete `ms`
+         * ("12h", "7d"...), que una variable de entorno no puede satisfacer en
+         * tiempo de compilacion. La asercion es segura porque el valor solo se
+         * lee del entorno del servidor, no de entrada de usuario.
+         */
+        expiresIn: (process.env.JWT_ACCESS_TTL ?? "12h") as `${number}h`,
       }),
       user: {
         id: user.id,

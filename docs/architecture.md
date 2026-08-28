@@ -44,3 +44,18 @@ ilimitadas.
 El conteo es por IP y vive en memoria: si algun dia se corren varias instancias
 hara falta un almacen compartido. Detras de un proxy hay que habilitar
 `trust proxy` en Express o todas las peticiones contaran como una sola IP.
+
+## Dependencias y seguridad
+
+El proyecto se mantiene en las versiones mayores actuales: Next 16, React 19,
+NestJS 11 (Express 5), Prisma 7 y Zod 4.
+
+Dos decisiones deliberadas:
+
+- **NestJS se queda en 11, no 12.** `@nestjs/throttler` 6 declara compatibilidad
+  hasta la 11; subir a la 12 romperia el rate limiting.
+- **`npm audit` reporta 3 vulnerabilidades altas en `prisma`.** La cadena es
+  `prisma` -> `@prisma/config` -> `deepmerge-ts`, y entra unicamente por el CLI,
+  que es dependencia de desarrollo. El runtime usa `@prisma/client` y el
+  adaptador, que no la arrastran. El unico "arreglo" que ofrece npm es bajar a
+  Prisma 6, es decir deshacer la actualizacion sin ganancia real.

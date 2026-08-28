@@ -2,12 +2,27 @@
 
 Plataforma de agendamiento de servicios para NAILS LU SPA.
 
+## Puesta en produccion
+
+```bash
+npm run build       # compila web y API
+npm run db:deploy   # aplica migraciones (no interactivo, para servidores)
+npm start           # arranca ambos en modo produccion
+```
+
+`db:migrate` usa `prisma migrate dev` y es solo para desarrollo: es interactivo
+y puede reescribir el historial. En el servidor va `db:deploy`.
+
+Antes del primer despliegue hay que cambiar `JWT_ACCESS_SECRET` por un valor
+aleatorio, apuntar `NEXT_PUBLIC_API_URL` y `NEXT_PUBLIC_SITE_URL` al dominio
+real, y definir `WEB_ORIGIN` para que el API solo acepte peticiones del sitio.
+
 ## Stack
 
-- Web: Next.js, TypeScript, TanStack Query, React Hook Form, Zod.
-- API: NestJS, TypeScript, JWT, Clean Architecture por modulo.
+- Web: Next.js 16, React 19, TypeScript, Tailwind 4, Zod 4.
+- API: NestJS 11 sobre Express 5, TypeScript, JWT, Clean Architecture por modulo.
 - DB: SQLite para desarrollo/MVP local. PostgreSQL sigue recomendado para produccion con alta concurrencia.
-- ORM: Prisma.
+- ORM: Prisma 7 con adaptador de controlador para SQLite.
 - Seguridad publica: rate limiting, idempotency key, validacion estricta y transacciones.
 
 ## Estructura

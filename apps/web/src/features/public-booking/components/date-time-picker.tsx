@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, CalendarDays, Clock3, RotateCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -218,7 +218,7 @@ export function DateTimePicker({
                     layout={!reducedMotion}
                     onClick={() => onTimeChange(slot)}
                     onFocus={() => slotFocus.onFocusItem(index)}
-                    onKeyDown={(event) => slotFocus.onKeyDown(event, index)}
+                    onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => slotFocus.onKeyDown(event, index)}
                     ref={slotFocus.registerRef(index)}
                     role="radio"
                     tabIndex={slotFocus.getTabIndex(index)}

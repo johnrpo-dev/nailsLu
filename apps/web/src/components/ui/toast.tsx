@@ -57,7 +57,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               )}
               duration={toast.variant === "error" ? 7000 : 4500}
               key={toast.id}
-              onOpenChange={(open) => !open && dismiss(toast.id)}
+              onOpenChange={(open: boolean) => !open && dismiss(toast.id)}
             >
               <Icon aria-hidden="true" className={cn("mt-0.5 size-5 shrink-0", className)} />
               <div className="min-w-0">
