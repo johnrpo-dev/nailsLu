@@ -7,6 +7,7 @@ import {
   BookingStatus,
   type BookingStatus as BookingStatusValue,
 } from "../../../common/enums";
+import { POLITICA_DATOS_VERSION, RETENCION_INTENTOS_DIAS } from "../../../common/privacy";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { addMinutes, rangesOverlap, todayIsoDate } from "../../availability/application/time.utils";
 import { AvailabilityService } from "../../availability/application/availability.service";
@@ -128,6 +129,11 @@ export class BookingsService {
       },
     });
 
+    // El registro de intentos guarda IP y navegador, que son datos personales.
+    // Se purga aqui en vez de con una tarea programada: no hace falta otra
+    // dependencia y la tabla solo crece cuando alguien reserva.
+    void this.purgarIntentosAntiguos();
+
     const selectedServices = await this.services.findActiveByIds(dto.serviceIds);
     const totalDurationMinutes = selectedServices.reduce((sum, service) => sum + service.durationMinutes, 0);
     const endTime = addMinutes(dto.startTime, totalDurationMinutes);
@@ -194,6 +200,9 @@ export class BookingsService {
             endTime,
             totalDurationMinutes,
             notes: dto.notes,
+            // Evidencia de la autorizacion: cuando la dio y que version acepto.
+            consentAcceptedAt: new Date(),
+            consentPolicyVersion: POLITICA_DATOS_VERSION,
             source: BookingSource.PUBLIC_WEB,
             idempotencyKey: dto.idempotencyKey,
             services: {
@@ -239,6 +248,22 @@ export class BookingsService {
         },
       },
     });
+  }
+
+  /**
+   * Borra los intentos mas viejos que la ventana de retencion.
+   *
+   * Sirven para investigar abuso reciente; conservarlos indefinidamente seria
+   * acumular datos personales sin finalidad. Los fallos no interrumpen la
+   * reserva: la limpieza es secundaria frente a atender a la clienta.
+   */
+  private async purgarIntentosAntiguos() {
+    const limite = new Date(Date.now() - RETENCION_INTENTOS_DIAS * 24 * 60 * 60 * 1000);
+    try {
+      await this.prisma.publicBookingAttempt.deleteMany({ where: { createdAt: { lt: limite } } });
+    } catch {
+      // Sin efecto sobre la reserva ya creada.
+    }
   }
 
   /**

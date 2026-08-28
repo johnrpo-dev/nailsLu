@@ -16,6 +16,8 @@ export const publicBookingSchema = z.object({
   staffId: z.uuid().optional(),
   notes: z.string().max(500).optional(),
   idempotencyKey: z.string().min(10),
+  /** Autorizacion de tratamiento de datos. Obligatoria (Ley 1581 de 2012). */
+  dataConsent: z.literal(true),
   /** Honeypot: debe llegar vacio. Si trae contenido, es un bot. */
   website: z.string().optional(),
 });

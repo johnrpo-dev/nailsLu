@@ -107,6 +107,15 @@ model Booking {
   totalPrice           Decimal?        @map("total_price")
   totalDurationMinutes Int             @map("total_duration_minutes")
   notes                String?
+
+  /**
+   * Evidencia de la autorizacion de tratamiento de datos (Ley 1581 de 2012).
+   * No basta con tener politica: hay que poder demostrar que cada clienta la
+   * acepto, y cual version acepto.
+   */
+  consentAcceptedAt    DateTime?       @map("consent_accepted_at")
+  consentPolicyVersion String?         @map("consent_policy_version")
+
   source               String          @default("PUBLIC_WEB")
   idempotencyKey       String?         @unique @map("idempotency_key")
   createdAt            DateTime        @default(now()) @map("created_at")

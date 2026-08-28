@@ -55,6 +55,9 @@ export function BookingExperience({ brand }: { brand?: ReactNode }) {
           date,
           startTime: time,
           idempotencyKey: crypto.randomUUID(),
+          // El formulario no deja enviar sin marcarla; el API la vuelve a
+          // validar porque la ley exige consentimiento expreso.
+          dataConsent: true,
           website: "",
         });
 

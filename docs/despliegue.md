@@ -137,3 +137,32 @@ scp usuario@servidor:/srv/nailslu/backups/nailslu-*.db ./copias-locales/
   que el rate limiting las cuenta a todas como una sola IP.
 - **"no such table"**: falta `npm run db:deploy`, o `DATABASE_URL` apunta a otro
   archivo. La ruta se resuelve desde `apps/api`.
+
+## Datos personales
+
+La app pide autorizacion de tratamiento (Ley 1581 de 2012) antes de guardar la
+reserva, y registra la evidencia con cada cita: fecha, hora y version de la
+politica aceptada. Sin eso no se puede demostrar que la clienta autorizo.
+
+**Antes de abrir al publico:**
+
+1. Completar `RESPONSABLE` en `apps/web/src/shared/lib/privacidad.ts` con NIT o
+   cedula, direccion, correo y telefono reales. La ley exige identificar al
+   responsable y dar un canal para ejercer derechos.
+2. **Que un abogado revise `/privacidad`.** Es una plantilla, no un texto legal
+   validado.
+3. Consultar si aplica el registro ante la SIC (Registro Nacional de Bases de
+   Datos); depende del tipo y tamano del responsable.
+
+Al cambiar el texto de la politica hay que subir la version en dos sitios a la
+vez, porque deben coincidir:
+
+- `apps/api/src/common/privacy.ts` -> `POLITICA_DATOS_VERSION`
+- `apps/web/src/shared/lib/privacidad.ts` -> `POLITICA_VERSION`
+
+Las autorizaciones anteriores siguen siendo validas para la version que
+aceptaron, no para la nueva.
+
+El sitio **no usa cookies** ni analitica ni rastreadores. El `localStorage` solo
+guarda la preferencia de tema y la sesion del panel. Si algun dia se agrega
+analitica o pixel publicitario, hace falta revisar el aviso.

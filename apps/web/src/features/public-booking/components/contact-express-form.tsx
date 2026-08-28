@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import Link from "next/link";
 import { AlertCircle, Info, Phone, Send, UserRound } from "lucide-react";
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,10 +20,13 @@ export function ContactExpressForm({
   onSubmit: (input: ContactFormValues) => Promise<void>;
 }) {
   const [values, setValues] = useState<ContactFormValues>({ clientName: "", phone: "", notes: "" });
+  const [consent, setConsent] = useState(false);
+  const [consentTouched, setConsentTouched] = useState(false);
   const [touched, setTouched] = useState<Record<FieldName, boolean>>({ clientName: false, phone: false });
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
+  const consentRef = useRef<HTMLInputElement>(null);
   const reducedMotion = useReducedMotion();
 
   const digits = values.phone.replace(/\D/g, "");
@@ -43,7 +47,7 @@ export function ContactExpressForm({
     return next;
   }, [values.clientName, digits]);
 
-  const valid = Object.keys(errors).length === 0;
+  const valid = Object.keys(errors).length === 0 && consent;
 
   function setField(field: keyof ContactFormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -52,11 +56,14 @@ export function ContactExpressForm({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setTouched({ clientName: true, phone: true });
+    setConsentTouched(true);
 
     // Se revelan los errores y se lleva el foco al primer campo con problema
     // en vez de dejar un boton inerte sin explicacion.
     if (!valid) {
-      (errors.clientName ? nameRef : phoneRef).current?.focus();
+      if (errors.clientName) nameRef.current?.focus();
+      else if (errors.phone) phoneRef.current?.focus();
+      else consentRef.current?.focus();
       return;
     }
     if (blocked) return;
@@ -66,6 +73,8 @@ export function ContactExpressForm({
       await onSubmit({ clientName: values.clientName.trim(), phone: digits, notes: values.notes.trim() });
       setValues({ clientName: "", phone: "", notes: "" });
       setTouched({ clientName: false, phone: false });
+      setConsent(false);
+      setConsentTouched(false);
     } catch {
       // El aviso lo emite el contenedor via toast; aqui solo se libera el boton
       // para que la clienta pueda reintentar sin recargar.
@@ -142,6 +151,44 @@ export function ContactExpressForm({
           value={values.notes}
         />
       </label>
+
+      <div className="grid gap-2">
+        <label className="flex items-start gap-3 text-sm leading-6" htmlFor="data-consent">
+          <input
+            aria-describedby={consentTouched && !consent ? "data-consent-error" : undefined}
+            aria-invalid={consentTouched && !consent}
+            checked={consent}
+            className="mt-0.5 size-5 shrink-0 accent-[hsl(var(--primary))]"
+            id="data-consent"
+            onChange={(event) => {
+              setConsent(event.target.checked);
+              setConsentTouched(true);
+            }}
+            ref={consentRef}
+            type="checkbox"
+          />
+          <span className="text-[hsl(var(--muted))]">
+            Autorizo el tratamiento de mis datos para agendar y confirmar mi cita, según la{" "}
+            <Link
+              className="focus-ring rounded font-bold text-[hsl(var(--foreground))] underline underline-offset-2"
+              href="/privacidad"
+              target="_blank"
+            >
+              política de tratamiento de datos
+            </Link>
+            .
+          </span>
+        </label>
+        {consentTouched && !consent ? (
+          <p
+            className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--danger))]"
+            id="data-consent-error"
+          >
+            <AlertCircle aria-hidden="true" className="size-3.5 shrink-0" />
+            Necesitamos tu autorización para poder guardar la reserva.
+          </p>
+        ) : null}
+      </div>
 
       {blocked ? (
         <p

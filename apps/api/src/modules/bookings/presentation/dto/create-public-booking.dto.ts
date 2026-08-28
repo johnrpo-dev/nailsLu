@@ -1,4 +1,14 @@
-import { ArrayMinSize, IsArray, IsDateString, IsOptional, IsString, Length, MaxLength } from "class-validator";
+import {
+  ArrayMinSize,
+  Equals,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsOptional,
+  IsString,
+  Length,
+  MaxLength,
+} from "class-validator";
 
 export class CreatePublicBookingDto {
   @IsString()
@@ -31,6 +41,15 @@ export class CreatePublicBookingDto {
 
   @IsString()
   idempotencyKey!: string;
+
+  /**
+   * Autorizacion de tratamiento de datos (Ley 1581 de 2012). Debe llegar en
+   * true: la ley exige consentimiento expreso, asi que se valida en el
+   * servidor y no solo en el formulario.
+   */
+  @IsBoolean()
+  @Equals(true, { message: "Debes autorizar el tratamiento de tus datos para reservar" })
+  dataConsent!: boolean;
 
   @IsOptional()
   @IsString()
