@@ -22,3 +22,5 @@ coverage
 
 # Cache incremental de TypeScript.
 *.tsbuildinfo
+
+backups/

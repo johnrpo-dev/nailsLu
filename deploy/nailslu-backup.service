@@ -1,0 +1,11 @@
+# Copia de seguridad diaria. Junto con nailslu-backup.timer.
+
+[Unit]
+Description=NAILS LU SPA - copia de seguridad de la base
+
+[Service]
+Type=oneshot
+User=nailslu
+WorkingDirectory=/srv/nailslu/apps/api
+EnvironmentFile=/srv/nailslu/apps/api/.env
+ExecStart=/usr/bin/node scripts/backup.mjs /srv/nailslu/backups

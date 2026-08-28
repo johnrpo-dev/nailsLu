@@ -1,0 +1,15 @@
+# Dispara la copia todos los dias de madrugada.
+#
+#   sudo systemctl enable --now nailslu-backup.timer
+#   systemctl list-timers nailslu-backup
+
+[Unit]
+Description=Copia diaria de la base de NAILS LU SPA
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+# Si el servidor estaba apagado a esa hora, la ejecuta al encender.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

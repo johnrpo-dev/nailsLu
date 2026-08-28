@@ -1,0 +1,23 @@
+# Servicio de la web. Copiar a /etc/systemd/system/nailslu-web.service
+
+[Unit]
+Description=NAILS LU SPA - Web
+After=network.target nailslu-api.service
+
+[Service]
+Type=simple
+User=nailslu
+WorkingDirectory=/srv/nailslu/apps/web
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm run start
+
+Restart=always
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

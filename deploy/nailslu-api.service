@@ -1,0 +1,31 @@
+# Servicio del API. Copiar a /etc/systemd/system/nailslu-api.service
+#
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now nailslu-api
+
+[Unit]
+Description=NAILS LU SPA - API
+After=network.target
+
+[Service]
+Type=simple
+User=nailslu
+WorkingDirectory=/srv/nailslu/apps/api
+Environment=NODE_ENV=production
+EnvironmentFile=/srv/nailslu/apps/api/.env
+ExecStart=/usr/bin/node dist/src/main.js
+
+# Si el proceso muere, systemd lo revive. Sin esto un error puntual deja el
+# negocio sin reservas hasta que alguien lo note.
+Restart=always
+RestartSec=5
+
+# La base es un archivo: el servicio solo puede escribir donde vive.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/nailslu/apps/api/prisma /srv/nailslu/apps/api/backups
+
+[Install]
+WantedBy=multi-user.target

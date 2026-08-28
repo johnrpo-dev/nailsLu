@@ -1,0 +1,31 @@
+# Servidor web para NAILS LU SPA.
+#
+# Caddy consigue y renueva el certificado HTTPS solo, sin configuracion.
+# Copiar a /etc/caddy/Caddyfile y cambiar el dominio.
+
+nailslu.com, www.nailslu.com {
+	encode zstd gzip
+
+	# El API va bajo /api para que web y API compartan dominio: asi no hace
+	# falta CORS entre ellos ni un subdominio aparte.
+	handle_path /api/* {
+		reverse_proxy localhost:3001
+	}
+
+	handle {
+		reverse_proxy localhost:3000
+	}
+
+	# Cabeceras de seguridad. Las de contenido las pone helmet en el API.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/nailslu.log
+		format json
+	}
+}

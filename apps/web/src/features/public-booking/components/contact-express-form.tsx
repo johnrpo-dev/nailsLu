@@ -219,7 +219,16 @@ function inputClassName(invalid: boolean) {
   );
 }
 
+/**
+ * Deja el numero en 10 digitos nacionales.
+ *
+ * Cortar a 10 sin mas mutilaba a quien escribia el indicativo: "573001234567"
+ * quedaba en "5730012345", un numero que no existe. Ahora el 57 inicial se
+ * reconoce y se descarta.
+ */
 function formatPhone(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 10);
+  let digits = value.replace(/\D/g, "");
+  if (digits.length > 10 && digits.startsWith("57")) digits = digits.slice(2);
+  digits = digits.slice(0, 10);
   return digits.replace(/(\d{3})(\d{0,3})(\d{0,4})/, (_match, a, b, c) => [a, b, c].filter(Boolean).join(" "));
 }

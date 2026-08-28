@@ -160,12 +160,28 @@ export class BookingsService {
           throw new ConflictException("Selected slot is no longer available");
         }
 
-        const client = await tx.client.create({
-          data: {
-            fullName: dto.clientName.trim(),
-            phone: this.normalizePhone(dto.phone),
-          },
-        });
+        /**
+         * El telefono identifica a la clienta.
+         *
+         * Antes cada reserva creaba un registro nuevo, asi que una clienta con
+         * cinco visitas quedaba como cinco personas distintas y su historial
+         * era inservible. Si ya existe se reutiliza y se actualiza el nombre
+         * con el ultimo que escribio, que corrige errores de tecleo previos.
+         *
+         * Va dentro de la transaccion, asi que dos reservas simultaneas del
+         * mismo telefono no pueden crear dos registros.
+         */
+        const phone = this.normalizePhone(dto.phone);
+        const fullName = dto.clientName.trim();
+        const existente = await tx.client.findFirst({ where: { phone }, select: { id: true, fullName: true } });
+
+        const client = existente
+          ? await tx.client.update({
+              where: { id: existente.id },
+              data: existente.fullName === fullName ? {} : { fullName },
+              select: { id: true },
+            })
+          : await tx.client.create({ data: { fullName, phone }, select: { id: true } });
 
         return tx.booking.create({
           data: {
@@ -225,7 +241,16 @@ export class BookingsService {
     });
   }
 
+  /**
+   * Normaliza a los 10 digitos nacionales.
+   *
+   * El telefono identifica a la clienta, asi que el mismo numero escrito con y
+   * sin indicativo debe producir la misma cadena. Si no, se duplican registros.
+   * No depende del formulario: cualquier cliente de la API queda igualado.
+   */
   private normalizePhone(phone: string) {
-    return phone.replace(/[^\d+]/g, "");
+    let digits = phone.replace(/\D/g, "");
+    if (digits.length > 10 && digits.startsWith("57")) digits = digits.slice(2);
+    return digits;
   }
 }
