@@ -2,7 +2,8 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CalendarCheck, Check, Clock3, Copy, MessageCircle, X } from "lucide-react";
+import { CalendarCheck, Check, Clock3, Copy, ExternalLink, MessageCircle, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import type { PublicBookingResult } from "@spa/shared";
 import { Badge } from "@/components/ui/badge";
@@ -37,14 +38,25 @@ export function BookingConfirmationDialog({
     setCopied(false);
   }
 
-  async function copyToken() {
+  /*
+   * Ruta relativa para el enlace y absoluta para copiar: pegar "/reserva/..."
+   * en un chat no lleva a ninguna parte. `window` no existe al renderizar en
+   * el servidor, pero este bloque solo corre con el dialogo abierto, que es
+   * siempre en el navegador.
+   */
+  const rutaReserva = booking ? `/reserva/${booking.publicToken}` : "";
+
+  async function copiarEnlace() {
     if (!booking) return;
+    const absoluto =
+      typeof window === "undefined" ? rutaReserva : `${window.location.origin}${rutaReserva}`;
     try {
-      await navigator.clipboard.writeText(booking.publicToken);
+      await navigator.clipboard.writeText(absoluto);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Sin permiso de portapapeles el codigo sigue visible en pantalla.
+      // Sin permiso de portapapeles queda el boton "Abrir mi cita", que no
+      // depende de copiar nada.
     }
   }
 
@@ -99,8 +111,8 @@ export function BookingConfirmationDialog({
                     </>
                   ) : (
                     <>
-                      Te escribimos al {formatPhoneDisplay(booking.client.phone)} para confirmar el turno. Guarda tu
-                      código por si necesitas consultarla o cancelarla.
+                      Te escribimos al {formatPhoneDisplay(booking.client.phone)} para confirmar el turno. Guarda el
+                      enlace de abajo por si necesitas consultarla o cancelarla.
                     </>
                   )}
                 </Dialog.Description>
@@ -134,18 +146,28 @@ export function BookingConfirmationDialog({
                   </div>
                 </div>
 
-                <div className="mt-4 grid min-w-0 gap-2 rounded-[1.5rem] border border-dashed border-[hsl(var(--border))] p-4">
-                  <p className="text-xs font-bold uppercase text-[hsl(var(--muted))]">Código de reserva</p>
-                  <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-                    {/*
-                      El token son 48 caracteres sin espacios: sin `break-all`
-                      impone su ancho minimo y desborda el dialogo en movil.
-                      Se muestra completo, que es mas util que recortado.
-                    */}
-                    <code className="min-w-0 break-all font-mono text-sm font-semibold">{booking.publicToken}</code>
-                    <Button className="shrink-0" onClick={copyToken} size="sm" type="button" variant="secondary">
+                {/*
+                  Antes aqui se mostraba el token crudo y se pedia guardarlo,
+                  pero no habia donde usarlo. Ahora es un enlace a /reserva, que
+                  es lo que se puede guardar de verdad: nadie transcribe 48
+                  caracteres a mano.
+                */}
+                <div className="mt-4 grid min-w-0 gap-3 rounded-[1.5rem] border border-dashed border-[hsl(var(--border))] p-4">
+                  <div className="grid gap-1">
+                    <p className="text-xs font-bold uppercase text-[hsl(var(--muted))]">Tu cita</p>
+                    <p className="text-sm leading-6 text-[hsl(var(--muted))]">
+                      Guarda este enlace para ver el estado de tu cita o cancelarla.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button asChild size="sm" variant="secondary">
+                      <Link href={rutaReserva} target="_blank">
+                        <ExternalLink aria-hidden="true" className="size-4" /> Abrir mi cita
+                      </Link>
+                    </Button>
+                    <Button onClick={copiarEnlace} size="sm" type="button" variant="secondary">
                       {copied ? <Check aria-hidden="true" className="size-4" /> : <Copy aria-hidden="true" className="size-4" />}
-                      {copied ? "Copiado" : "Copiar"}
+                      {copied ? "Copiado" : "Copiar enlace"}
                     </Button>
                   </div>
                 </div>
