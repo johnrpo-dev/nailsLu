@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { ACTIVE_BOOKING_STATUSES, AvailabilityBlockType } from "../../../common/enums";
 import { PrismaService } from "../../../prisma/prisma.service";
-import { addMinutes, minutesFromTime, rangesOverlap, timeFromMinutes } from "./time.utils";
+import { addMinutes, ahoraEnElSalon, minutesFromTime, rangesOverlap, timeFromMinutes } from "./time.utils";
 
 type AvailabilityQuery = {
   date: string;
@@ -56,6 +56,24 @@ export class AvailabilityService {
     const slots = new Set<string>();
 
     /**
+     * No se agenda en el pasado.
+     *
+     * Faltaba por completo: el calculo solo miraba horario, reservas y
+     * bloqueos, nunca el reloj. A las 10:19 de la manana seguia ofreciendo las
+     * 8:30 del mismo dia, y como reservar valida contra esta misma funcion,
+     * tampoco lo frenaba el servidor.
+     *
+     * Un dia entero ya pasado no tiene ninguna franja. En el dia de hoy se
+     * descartan las que ya empezaron; se compara con `<=` para no ofrecer una
+     * franja justo en el minuto en que arranca.
+     */
+    const ahora = ahoraEnElSalon();
+    if (query.date < ahora.fecha) {
+      return { date: query.date, durationMinutes: query.durationMinutes, slots: [] };
+    }
+    const minutoMinimo = query.date === ahora.fecha ? ahora.minutos : -1;
+
+    /**
      * `endTime` es la hora de la ULTIMA CITA que se acepta, no la hora a la que
      * todo debe estar terminado.
      *
@@ -70,6 +88,8 @@ export class AvailabilityService {
         cursor <= minutesFromTime(ventana.endTime);
         cursor += 30
       ) {
+        if (cursor <= minutoMinimo) continue;
+
         const startTime = timeFromMinutes(cursor);
         const endTime = addMinutes(startTime, query.durationMinutes);
 
