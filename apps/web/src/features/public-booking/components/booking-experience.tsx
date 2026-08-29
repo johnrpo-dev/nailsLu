@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/toast";
 import { ServiceCatalog } from "@/features/service-catalog/components/service-catalog";
 import { useServices } from "@/features/service-catalog/hooks/use-services";
 import { ApiError } from "@/shared/api/client";
+import { generarClaveIdempotencia } from "@/shared/lib/clave-idempotencia";
 import { todayIsoDate } from "@/shared/lib/date";
 import { formatDuration } from "@/shared/lib/format";
 import { createPublicBooking } from "../services/booking-api";
@@ -54,7 +55,7 @@ export function BookingExperience({ brand }: { brand?: ReactNode }) {
           serviceIds: selectedIds,
           date,
           startTime: time,
-          idempotencyKey: crypto.randomUUID(),
+          idempotencyKey: generarClaveIdempotencia(),
           // El formulario no deja enviar sin marcarla; el API la vuelve a
           // validar porque la ley exige consentimiento expreso.
           dataConsent: true,
