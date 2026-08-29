@@ -56,16 +56,19 @@ En `apps/web/.env.local`:
 
 - `NEXT_PUBLIC_API_URL="https://nailslu.com/api"`
 - `NEXT_PUBLIC_SITE_URL="https://nailslu.com"`
-- `NEXT_PUBLIC_WHATSAPP_NUMBER="573045442496"`
+- `NEXT_PUBLIC_WHATSAPP_NUMBER` con el numero al que llegan los avisos, con
+  indicativo y sin signos.
 
-**Ojo con el numero.** Es el 304 544 2496 de Yeri, con indicativo y sin signos.
-En desarrollo hay otro distinto configurado a proposito, para hacer pruebas sin
-molestarla: si copias el `.env.local` de tu equipo al servidor, las clientas le
-escribiran al numero de pruebas y ella no se entera de ninguna cita.
+**Este numero se cambia a mano, cuando se decida.** Mientras se hacen pruebas,
+produccion corre con `573003024035`, que es de pruebas y no el de Yeri: asi se
+puede reservar contra el sitio real sin llenarle el WhatsApp de citas falsas.
 
-El sitio no compila para produccion si esta variable falta o tiene menos de 10
-digitos, pero nada puede detectar que el numero sea el equivocado. Comprueba
-este a mano.
+El numero de Yeri, para cuando toque hacer el cambio, es `573045442496`. Se
+cambia esta variable y se vuelve a compilar la web; no hay nada mas que tocar.
+
+El sitio no compila si la variable falta o tiene menos de 10 digitos, pero
+ningun control puede saber a quien pertenece un numero valido. El cambio es
+deliberado, no automatico.
 
 ## 4. Base de datos y compilacion
 
