@@ -71,7 +71,7 @@ export function AvailabilityManager() {
         ) : (
           <>
             <WeeklyHoursEditor hours={hours} onSaved={setHours} />
-            <BlocksEditor blocks={blocks} onChange={setBlocks} />
+            <BlocksEditor blocks={blocks} hours={hours} onChange={setBlocks} />
           </>
         )}
       </div>

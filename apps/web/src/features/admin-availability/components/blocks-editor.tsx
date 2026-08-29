@@ -9,20 +9,27 @@ import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
 import { formatLongDate, todayIsoDate } from "@/shared/lib/date";
 import { formatRangoHoras } from "@/shared/lib/format";
-import { createBlock, deleteBlock, type AvailabilityBlock } from "../services/availability-admin-api";
-
-const JORNADA = { inicio: "00:00", fin: "23:59" };
+import {
+  createBlock,
+  deleteBlock,
+  type AvailabilityBlock,
+  type BusinessHour,
+} from "../services/availability-admin-api";
+import { DIA_COMPLETO_ANTIGUO, jornadaDe } from "../lib/jornada";
 
 export function BlocksEditor({
   blocks,
+  hours,
   onChange,
 }: {
   blocks: AvailabilityBlock[];
+  /** Horario semanal, para saber que significa "toda la jornada" cada dia. */
+  hours: BusinessHour[];
   onChange: (blocks: AvailabilityBlock[]) => void;
 }) {
   const [date, setDate] = useState(todayIsoDate);
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("19:00");
+  const [startTime, setStartTime] = useState("08:00");
+  const [endTime, setEndTime] = useState("18:00");
   const [reason, setReason] = useState("");
   const [todoElDia, setTodoElDia] = useState(true);
   const [type, setType] = useState<"BLOCKED" | "AVAILABLE">("BLOCKED");
@@ -30,8 +37,9 @@ export function BlocksEditor({
   const [borrando, setBorrando] = useState<string | null>(null);
   const { showToast } = useToast();
 
-  const desde = todoElDia ? JORNADA.inicio : startTime;
-  const hasta = todoElDia ? JORNADA.fin : endTime;
+  const jornada = jornadaDe(date, hours);
+  const desde = todoElDia ? jornada.inicio : startTime;
+  const hasta = todoElDia ? jornada.fin : endTime;
   const rangoValido = hasta > desde;
 
   async function agregar() {
@@ -126,7 +134,7 @@ export function BlocksEditor({
               onChange={(event) => setTodoElDia(event.target.checked)}
               type="checkbox"
             />
-            Todo el día
+            Toda la jornada ({formatRangoHoras(jornada.inicio, jornada.fin)})
           </label>
 
           {!todoElDia ? (
@@ -177,7 +185,12 @@ export function BlocksEditor({
       {blocks.length ? (
         <ul className="mt-4 grid gap-2">
           {blocks.map((block) => {
-            const todoElDiaBloque = block.startTime === JORNADA.inicio && block.endTime === JORNADA.fin;
+            // Se reconocen tanto los que cubren la jornada del dia como los
+            // antiguos de medianoche a medianoche, que siguen en la base.
+            const jornadaDelBloque = jornadaDe(block.date.slice(0, 10), hours);
+            const todoElDiaBloque =
+              (block.startTime === jornadaDelBloque.inicio && block.endTime === jornadaDelBloque.fin) ||
+              (block.startTime === DIA_COMPLETO_ANTIGUO.inicio && block.endTime === DIA_COMPLETO_ANTIGUO.fin);
             return (
               <li
                 className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[hsl(var(--border))] p-3"
@@ -195,7 +208,11 @@ export function BlocksEditor({
                     >
                       {block.type === "BLOCKED" ? "Cerrado" : "Abierto"}
                     </span>
-                    <Badge>{todoElDiaBloque ? "Todo el día" : formatRangoHoras(block.startTime, block.endTime)}</Badge>
+                    <Badge>
+                      {todoElDiaBloque
+                        ? `Toda la jornada · ${formatRangoHoras(block.startTime, block.endTime)}`
+                        : formatRangoHoras(block.startTime, block.endTime)}
+                    </Badge>
                   </div>
                   <p className="mt-2 text-sm font-bold">{formatLongDate(block.date.slice(0, 10))}</p>
                   {block.reason ? (
