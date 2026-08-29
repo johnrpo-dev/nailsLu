@@ -31,7 +31,8 @@ real, y definir `WEB_ORIGIN` para que el API solo acepte peticiones del sitio.
 - `apps/api`: backend modular.
 - `packages/shared`: contratos, tipos y validadores compartidos.
 - `packages/ui`: componentes visuales reutilizables.
-- `docs`: decisiones de arquitectura, API y base de datos.
+- `docs`: arquitectura, API, base de datos, despliegue, secretos y la guia de
+  uso para la duena (`guia-para-lu.md`).
 
 ## Primeros pasos
 
@@ -105,6 +106,7 @@ que no pueda usarse en la aplicacion normal.
 - Panel: reservas, servicios y disponibilidad operativos.
 - La sesion del panel dura 12 horas (`JWT_ACCESS_TTL`). No hay refresh tokens,
   asi que al vencer hay que volver a entrar.
-- Sin tests ni configuracion de ESLint todavia, asi que `npm run lint` no corre.
+- 32 pruebas automaticas sobre la logica de agenda, fechas y claves: `npm test`.
+- Sin configuracion de ESLint todavia, asi que `npm run lint` no corre.
 
 La app estatica inicial se conserva en la raiz como prototipo rapido: `index.html`, `styles.css`, `app.js`.

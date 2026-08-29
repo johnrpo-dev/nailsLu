@@ -6,7 +6,46 @@ import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { CARPETA_SUBIDAS } from "./modules/services/application/service-images.service";
 
+/**
+ * Comprueba la configuracion critica antes de levantar nada.
+ *
+ * Arrancar en produccion con el secreto de ejemplo dejaria el panel abierto:
+ * ese valor esta publicado en el repositorio y cualquiera podria fabricarse un
+ * token de administradora. Es preferible no arrancar a arrancar inseguro.
+ */
+function verificarConfiguracion() {
+  if (process.env.NODE_ENV !== "production") return;
+
+  const secreto = process.env.JWT_ACCESS_SECRET;
+  const problemas: string[] = [];
+
+  if (!secreto) {
+    problemas.push("JWT_ACCESS_SECRET no esta definido.");
+  } else if (secreto.startsWith("change-me")) {
+    problemas.push("JWT_ACCESS_SECRET sigue con el valor de ejemplo, que es publico.");
+  } else if (secreto.length < 32) {
+    problemas.push("JWT_ACCESS_SECRET es demasiado corto: usa al menos 32 caracteres.");
+  }
+
+  if (!process.env.WEB_ORIGIN) {
+    problemas.push("WEB_ORIGIN no esta definido: el API aceptaria peticiones de cualquier sitio.");
+  }
+
+  if (problemas.length > 0) {
+    console.error("");
+    console.error("No se puede arrancar en produccion:");
+    for (const problema of problemas) console.error("  - " + problema);
+    console.error("");
+    console.error("Genera un secreto con este comando y ponlo en apps/api/.env:");
+    console.error("  node -e \"console.log(require('crypto').randomBytes(48).toString('base64url'))\"");
+    console.error("");
+    process.exit(1);
+  }
+}
+
 async function bootstrap() {
+  verificarConfiguracion();
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService);
 
@@ -68,10 +107,6 @@ async function bootstrap() {
 
   const port = config.get<number>("PORT") ?? 3001;
   await app.listen(port);
-
-  if (process.env.NODE_ENV === "production" && !origenes) {
-    console.warn("[aviso] WEB_ORIGIN sin definir: el API acepta peticiones de cualquier origen.");
-  }
 }
 
 bootstrap();

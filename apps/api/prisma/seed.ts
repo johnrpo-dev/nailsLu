@@ -1,6 +1,7 @@
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
+import crypto from "node:crypto";
 import { UserRole } from "../src/common/enums";
 
 /**
@@ -34,19 +35,53 @@ const SERVICIOS = [
   ["Retiro con limpieza", "Retiro de producto con limpieza y cuidado de cutícula.", 45, 11],
 ] as const;
 
+/**
+ * Contrasena inicial del panel.
+ *
+ * No se escribe en el codigo: el repositorio es publico y cualquiera podria
+ * leerla y entrar. Se toma de `SEED_ADMIN_PASSWORD` y, si no esta, se genera
+ * una aleatoria que se imprime una sola vez por consola.
+ */
+function contrasenaInicial() {
+  const delEntorno = process.env.SEED_ADMIN_PASSWORD;
+  if (delEntorno && delEntorno.length >= 10) return { valor: delEntorno, generada: false };
+
+  if (delEntorno) {
+    throw new Error("SEED_ADMIN_PASSWORD debe tener al menos 10 caracteres.");
+  }
+  return { valor: crypto.randomBytes(12).toString("base64url"), generada: true };
+}
+
+const EMAIL_ADMIN = process.env.SEED_ADMIN_EMAIL ?? "admin@spa.local";
+
 async function main() {
-  // La cuenta si se puede reclamar siempre: el upsert no pisa la contrasena
-  // porque `update` va vacio, asi que reejecutarlo es inofensivo.
+  // La cuenta se reclama siempre, pero `update` va vacio: reejecutar el seed no
+  // pisa una contrasena ya cambiada desde el panel.
+  const yaExiste = await prisma.user.findUnique({ where: { email: EMAIL_ADMIN }, select: { id: true } });
+  const { valor, generada } = contrasenaInicial();
+
   await prisma.user.upsert({
-    where: { email: "admin@spa.local" },
+    where: { email: EMAIL_ADMIN },
     update: {},
     create: {
-      email: "admin@spa.local",
+      email: EMAIL_ADMIN,
       name: "Admin Spa",
       role: UserRole.OWNER,
-      passwordHash: await bcrypt.hash("Admin12345!", 12),
+      passwordHash: await bcrypt.hash(valor, 12),
     },
   });
+
+  if (yaExiste) {
+    console.log(`La cuenta ${EMAIL_ADMIN} ya existia: su contrasena no se toco.`);
+  } else {
+    console.log("");
+    console.log("  Cuenta creada");
+    console.log(`  Correo:     ${EMAIL_ADMIN}`);
+    console.log(`  Contrasena: ${valor}`);
+    if (generada) console.log("  (generada al azar; anotala ahora, no se vuelve a mostrar)");
+    console.log("  Cambiala al entrar al panel, en Tu cuenta.");
+    console.log("");
+  }
 
   /**
    * Catalogo y horario solo se crean si la base esta vacia.

@@ -34,11 +34,16 @@ export default function PoliticaPage() {
         <section>
           <h2 className="text-xl font-black tracking-tight">Quién responde por tus datos</h2>
           <ul className="mt-3 grid gap-1 text-[hsl(var(--muted))]">
-            <li><strong className="text-[hsl(var(--foreground))]">Responsable:</strong> {RESPONSABLE.nombre}</li>
+            <li><strong className="text-[hsl(var(--foreground))]">Negocio:</strong> {RESPONSABLE.nombre}</li>
+            <li><strong className="text-[hsl(var(--foreground))]">Responsable:</strong> {RESPONSABLE.responsable}</li>
             <li><strong className="text-[hsl(var(--foreground))]">Identificación:</strong> {RESPONSABLE.identificacion}</li>
-            <li><strong className="text-[hsl(var(--foreground))]">Dirección:</strong> {RESPONSABLE.direccion}, {RESPONSABLE.ciudad}</li>
+            {RESPONSABLE.direccion ? (
+              <li><strong className="text-[hsl(var(--foreground))]">Dirección:</strong> {RESPONSABLE.direccion}, {RESPONSABLE.ciudad}</li>
+            ) : (
+              <li><strong className="text-[hsl(var(--foreground))]">Ciudad:</strong> {RESPONSABLE.ciudad}</li>
+            )}
             <li><strong className="text-[hsl(var(--foreground))]">Correo:</strong> {RESPONSABLE.correo}</li>
-            <li><strong className="text-[hsl(var(--foreground))]">Teléfono:</strong> {RESPONSABLE.telefono}</li>
+            <li><strong className="text-[hsl(var(--foreground))]">WhatsApp:</strong> {RESPONSABLE.telefono}</li>
           </ul>
         </section>
 
