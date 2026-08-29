@@ -11,24 +11,6 @@ export const CARPETA_SUBIDAS = path.resolve(process.env.UPLOADS_DIR ?? "./upload
 const TIPOS_ACEPTADOS = ["image/jpeg", "image/png", "image/webp"];
 const MAXIMO_BYTES = 8 * 1024 * 1024;
 
-/** Proporcion del marco en las tarjetas: 4:5, el vertical de Instagram. */
-const PROPORCION_MARCO = 4 / 5;
-
-/**
- * Escala a la que la foto llena el marco sin dejar huecos.
- *
- * La imagen se dibuja con `object-fit: contain`, asi que a escala 100 se ve
- * completa con aire alrededor. Esta es la escala que la hace llenar el marco,
- * y es el encuadre inicial razonable: se ve bien sin tocar nada.
- */
-export function escalaQueLlena(ancho: number, alto: number) {
-  const proporcion = ancho / alto;
-  const factor = Math.max(proporcion / PROPORCION_MARCO, PROPORCION_MARCO / proporcion);
-  // Se redondea hacia arriba con un punto de margen: redondear al valor mas
-  // cercano dejaba la foto un pixel corta y asomaba una hebra de fondo.
-  return Math.min(250, Math.max(100, Math.ceil(factor * 100) + 1));
-}
-
 @Injectable()
 export class ServiceImagesService {
   constructor(private readonly prisma: PrismaService) {}
@@ -56,16 +38,7 @@ export class ServiceImagesService {
     }
 
     let procesada: Buffer;
-    let escalaInicial = 100;
     try {
-      const original = sharp(archivo.buffer);
-      const meta = await original.metadata();
-      // Con EXIF de rotacion, ancho y alto vienen intercambiados.
-      const girada = (meta.orientation ?? 1) >= 5;
-      const ancho = (girada ? meta.height : meta.width) ?? 0;
-      const alto = (girada ? meta.width : meta.height) ?? 0;
-      if (ancho > 0 && alto > 0) escalaInicial = escalaQueLlena(ancho, alto);
-
       procesada = await sharp(archivo.buffer)
         .rotate() // Respeta la orientación EXIF: si no, las fotos verticales salen giradas.
         .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
@@ -84,7 +57,11 @@ export class ServiceImagesService {
 
     return this.prisma.service.update({
       where: { id: serviceId },
-      data: { imageUrl: `/uploads/${nombre}`, imageFocalX: 50, imageFocalY: 50, imageScale: escalaInicial },
+      /**
+       * Escala 100 y centro: con `object-fit: cover` eso ya llena el marco
+       * entero, venga la foto como venga. Desde ahi se reencuadra a mano.
+       */
+      data: { imageUrl: `/uploads/${nombre}`, imageFocalX: 50, imageFocalY: 50, imageScale: 100 },
       select: CAMPOS_IMAGEN,
     });
   }

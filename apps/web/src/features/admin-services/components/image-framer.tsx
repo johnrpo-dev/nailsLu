@@ -109,7 +109,8 @@ export function ImageFramer({
               draggable={false}
               src={url}
               style={{
-                objectFit: "contain",
+                // Igual que en la tarjeta: recorta para llenar el marco entero.
+                objectFit: "cover",
                 objectPosition: `${encuadre.imageFocalX}% ${encuadre.imageFocalY}%`,
                 transform: encuadre.imageScale === 100 ? undefined : `scale(${encuadre.imageScale / 100})`,
               }}

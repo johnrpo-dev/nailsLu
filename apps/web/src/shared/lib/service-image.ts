@@ -11,13 +11,13 @@ export function urlDeFoto(imageUrl?: string | null) {
 /**
  * Estilos de encuadre.
  *
- * La imagen usa `object-fit: contain` y se agranda con `scale`, nunca se
- * encoge. Asi el elemento siempre llena el marco: si se encogiera se despegaria
- * de los bordes, dejaria huecos y la esquina redondeada dejaria de recortarlo,
- * que es justo lo que se veia mal.
+ * `object-fit: cover` recorta la foto para llenar el marco entero, sea cual sea
+ * su proporcion. Es lo que garantiza que la tarjeta nunca muestre huecos ni
+ * pierda la esquina redondeada, sin depender de calcular ninguna escala.
  *
- * A escala 100 la foto se ve completa; al subirla el API calcula la escala que
- * la hace llenar el marco y esa queda como punto de partida.
+ * Sobre esa base: `objectPosition` decide que parte de la foto se ve y `scale`
+ * acerca. La escala nunca baja de 100 porque encoger despegaria la imagen del
+ * marco, que es justo el defecto que se buscaba evitar.
  */
 export function estiloDeEncuadre(servicio: {
   imageFocalX?: number;
@@ -28,7 +28,7 @@ export function estiloDeEncuadre(servicio: {
   const y = servicio.imageFocalY ?? 50;
   const escala = Math.max(100, servicio.imageScale ?? 100) / 100;
   return {
-    objectFit: "contain",
+    objectFit: "cover",
     objectPosition: `${x}% ${y}%`,
     transform: escala === 1 ? undefined : `scale(${escala})`,
   };
