@@ -43,7 +43,7 @@ export class CreateServiceDto {
 
   @IsOptional()
   @IsInt()
-  @Min(60)
+  @Min(100)
   @Max(250)
   imageScale?: number;
 }

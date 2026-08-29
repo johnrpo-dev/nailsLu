@@ -56,7 +56,7 @@ export function ServiceDetailsDialog({
                   <div className="mt-5 aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-[hsl(var(--surface))]">
                     <img
                       alt={service.name}
-                      className="size-full object-cover"
+                      className="size-full"
                       src={urlDeFoto(service.imageUrl) as string}
                       style={estiloDeEncuadre(service)}
                     />

@@ -19,13 +19,14 @@ export class UpdateServiceImageDto {
   imageFocalY?: number;
 
   /**
-   * 100 llena la tarjeta. Por debajo deja aire alrededor, por encima acerca.
-   * El rango evita que la foto se pierda o se pixele.
+   * 100 muestra la foto completa; al subir se acerca hasta llenar el marco.
+   * El minimo es 100 porque por debajo la imagen se despegaria de los bordes
+   * y dejaria de recortarla la esquina redondeada.
    */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(60)
+  @Min(100)
   @Max(250)
   imageScale?: number;
 }

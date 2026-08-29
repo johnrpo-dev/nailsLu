@@ -7,7 +7,11 @@ import { urlDeFoto } from "@/shared/lib/service-image";
 
 export type Encuadre = { imageFocalX: number; imageFocalY: number; imageScale: number };
 
-const ESCALA_MIN = 60;
+/**
+ * 100 muestra la foto completa. No se baja de ahi: por debajo la imagen se
+ * despegaria del marco, dejaria huecos y perderia la esquina redondeada.
+ */
+const ESCALA_MIN = 100;
 const ESCALA_MAX = 250;
 
 /**
@@ -101,10 +105,11 @@ export function ImageFramer({
           <>
             <img
               alt="Vista previa"
-              className="size-full select-none object-cover"
+              className="size-full select-none"
               draggable={false}
               src={url}
               style={{
+                objectFit: "contain",
                 objectPosition: `${encuadre.imageFocalX}% ${encuadre.imageFocalY}%`,
                 transform: encuadre.imageScale === 100 ? undefined : `scale(${encuadre.imageScale / 100})`,
               }}
@@ -157,7 +162,7 @@ export function ImageFramer({
           </div>
           <button
             className="focus-ring justify-self-start rounded-full text-xs font-bold text-[hsl(var(--muted))] underline underline-offset-2 hover:text-[hsl(var(--foreground))]"
-            onClick={() => onEncuadreChange({ imageFocalX: 50, imageFocalY: 50, imageScale: 100 })}
+            onClick={() => onEncuadreChange({ ...encuadre, imageFocalX: 50, imageFocalY: 50 })}
             type="button"
           >
             Centrar de nuevo

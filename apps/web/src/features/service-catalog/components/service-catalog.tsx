@@ -105,7 +105,7 @@ export function ServiceCatalog({
                   <div className="relative -m-4 mb-4 aspect-[4/5] overflow-hidden rounded-t-[1.75rem] bg-[hsl(var(--surface))]">
                     <img
                       alt={service.name}
-                      className="size-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                      className="size-full transition duration-500 group-hover:scale-[1.03]"
                       loading="lazy"
                       src={urlDeFoto(service.imageUrl) as string}
                       style={estiloDeEncuadre(service)}
