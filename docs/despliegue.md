@@ -63,8 +63,8 @@ Al crearlo:
 
 Al terminar tendrás una **IP pública**, algo como `203.0.113.45`. Apúntala.
 
-> 1 GB de RAM se queda corto: compilar Next.js necesita más y el proceso muere a
-> mitad. Con 2 GB va sobrado.
+> Con 1 GB no alcanza para compilar Next.js. Con 2 GB tampoco va holgado: sale
+> adelante, pero conviene añadir memoria de intercambio (paso 3.5).
 
 ---
 
@@ -73,8 +73,11 @@ Al terminar tendrás una **IP pública**, algo como `203.0.113.45`. Apúntala.
 Desde tu equipo:
 
 ```bash
-ssh root@TU_IP
+ssh -p TU_PUERTO_SSH root@TU_IP
 ```
+
+Si no sabes el puerto, míralo en el panel del proveedor. Con Spaceship es el
+`22022`, no el 22.
 
 Actualiza el sistema:
 
@@ -92,20 +95,46 @@ usermod -aG sudo john
 Copia tu clave SSH al usuario nuevo (desde **tu equipo**, en otra terminal):
 
 ```bash
-ssh-copy-id john@TU_IP
+ssh-copy-id -p TU_PUERTO_SSH john@TU_IP
 ```
 
 Comprueba que entras como `john` **antes** de cerrar la sesión de root. Si te
 equivocas aquí, te quedas fuera del servidor.
 
-Activa el cortafuegos:
+### Memoria de intercambio
+
+Con 2 GB de RAM el build de Next.js se queda al límite. Cuatro gigas de
+intercambio lo resuelven y no cuestan nada:
 
 ```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 80
-sudo ufw allow 443
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+sudo sysctl -w vm.swappiness=10
+echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf
+```
+
+`free -h` debe mostrar `Swap: 4.0Gi`.
+
+### Cortafuegos
+
+**Comprueba primero en qué puerto escucha SSH.** Muchos proveedores no usan el
+22; Spaceship, por ejemplo, usa el 22022. Si abres el puerto equivocado y
+activas el cortafuegos, **te quedas fuera del servidor** y solo se recupera por
+la consola web del panel.
+
+```bash
+sudo ufw allow TU_PUERTO_SSH/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw show added        # comprobar ANTES de activar
 sudo ufw enable
 ```
+
+Deja la sesión abierta y comprueba desde otra ventana que puedes entrar antes
+de cerrarla.
 
 **Solo esos tres puertos.** El 3000 y el 3001 son internos: Caddy habla con
 ellos desde dentro. Si los abres, cualquiera puede saltarse el HTTPS.
@@ -159,14 +188,18 @@ falla y queda esperando.
 ## 6. Traer el código
 
 ```bash
-sudo adduser --system --group --home /srv/nailslu nailslu
-sudo -u nailslu git clone https://github.com/johnrpo-dev/nailsLu.git /srv/nailslu
+sudo adduser --system --group --no-create-home --home /srv/nailslu nailslu
+sudo git clone https://github.com/johnrpo-dev/nailsLu.git /srv/nailslu
+sudo chown -R nailslu:nailslu /srv/nailslu
 cd /srv/nailslu
-sudo -u nailslu npm ci
+sudo -u nailslu -H npm ci
 ```
 
-`npm ci` instala también las herramientas de compilación; hacen falta para el
-paso 8.
+`npm ci` instala también las herramientas de compilación y genera el cliente de
+Prisma, que hace falta antes de sembrar la base.
+
+El `-H` importa: sin él `sudo` conserva el home de root y npm intenta escribir
+su caché donde no debe.
 
 Crea las carpetas donde el servicio va a escribir:
 
@@ -232,10 +265,14 @@ compilar, no basta con reiniciar.
 
 ```bash
 cd /srv/nailslu
-sudo -u nailslu npm run db:deploy
-sudo -u nailslu npm run db:seed
-sudo -u nailslu npm run build
+sudo -u nailslu -H npm run db:deploy
+sudo -u nailslu -H npm run db:seed
+sudo -u nailslu -H npm run build
 ```
+
+Si el seed falla con `Cannot find module '.prisma/client/default'`, el cliente
+de Prisma no se genero. Se arregla con `sudo -u nailslu -H npm run db:generate`
+y se repite el seed.
 
 - `db:deploy` crea las tablas. **No uses `db:migrate` en el servidor**: eso es
   para desarrollo y puede pedir borrar datos.
@@ -305,11 +342,11 @@ Y desde el navegador, en el móvil y en el ordenador:
 
 ```bash
 cd /srv/nailslu
-sudo -u nailslu npm run db:backup -w @spa/api   # primero la copia
+sudo -u nailslu -H npm run db:backup -w @spa/api   # primero la copia
 sudo -u nailslu git pull
-sudo -u nailslu npm ci
-sudo -u nailslu npm run db:deploy
-sudo -u nailslu npm run build
+sudo -u nailslu -H npm ci
+sudo -u nailslu -H npm run db:deploy
+sudo -u nailslu -H npm run build
 sudo systemctl restart nailslu-api nailslu-web
 ```
 
@@ -340,7 +377,7 @@ sudo systemctl start nailslu-api
 todo lo demás. Llévatelas fuera de vez en cuando:
 
 ```bash
-scp john@TU_IP:/srv/nailslu/backups/nailslu-*.db ./copias-locales/
+scp -P TU_PUERTO_SSH john@TU_IP:/srv/nailslu/backups/nailslu-*.db ./copias-locales/
 ```
 
 ---
@@ -356,7 +393,8 @@ scp john@TU_IP:/srv/nailslu/backups/nailslu-*.db ./copias-locales/
 | Las clientas se bloquean entre sí | Falta `TRUST_PROXY=1` |
 | El panel devuelve 401 al entrar | Cambió `JWT_ACCESS_SECRET`; hay que entrar de nuevo |
 | Error al subir una foto | La carpeta `uploads` no existe o no está en `ReadWritePaths` del servicio |
-| El build muere sin explicación | Falta memoria. Con 1 GB no alcanza |
+| El build muere sin explicación | Falta memoria. Ver la nota de memoria de intercambio abajo |
+| `Cannot find module '.prisma/client/default'` | Falta `npm run db:generate` |
 
 ---
 
