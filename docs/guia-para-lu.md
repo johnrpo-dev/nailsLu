@@ -78,6 +78,21 @@ horas a clientas nuevas. Si necesitas cancelar una cita existente, hazlo desde
 
 Para cambiar la contraseña. Nada más por ahora.
 
+## Festivos
+
+Los festivos de Colombia se cierran solos. No tienes que hacer nada: esos días
+nadie puede reservar, y si una clienta entra a la página le dice "Cerrado por
+festivo: Navidad" en vez de dejarla dando vueltas.
+
+Los cálculos incluyen los que se corren al lunes por la Ley Emiliani y los que
+dependen de la Semana Santa, así que no hay ninguna lista que actualizar cada
+año.
+
+En Disponibilidad verás **Próximos festivos** con los que vienen. Si vas a
+trabajar alguno, lo abres tú: creas una excepción **Disponible** para esa fecha
+con las horas que quieras atender. Solo se ofrecerán esas horas, no la jornada
+completa, que es lo normal cuando se trabaja un festivo.
+
 ## Citas a domicilio
 
 Al reservar, la clienta elige si viene al spa o si vas tú. Si elige domicilio

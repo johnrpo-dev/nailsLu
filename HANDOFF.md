@@ -95,6 +95,20 @@ clienta.
 La dirección tampoco se muestra, por lo mismo: si atiende en casa, publicarla
 expone su domicilio. Ambos campos se muestran solos si algún día se rellenan.
 
+### Los festivos se cierran solos
+
+Los 18 festivos de Colombia se calculan, no se listan: traslados de la Ley
+Emiliani al lunes y los cinco que dependen de la Pascua. No hay tabla que
+caduque cada diciembre.
+
+En festivo el horario semanal no cuenta. Se puede abrir un festivo concreto con
+una excepción `AVAILABLE`, y entonces valen solo esas horas, no la jornada
+entera.
+
+Un detalle real: en algunos años dos celebraciones caen el mismo lunes (2030,
+San Pedro y Sagrado Corazón el 1 de julio). Es un solo día no laborable, así
+que ese año hay 17 fechas y no 18.
+
 ### Citas a domicilio y tiempo de traslado
 
 La clienta elige spa o domicilio al reservar; a domicilio la dirección es
@@ -150,8 +164,8 @@ día ofrece citas de madrugada. Se borra desde el panel, en Disponibilidad.
 
 ## Estado de la verificación
 
-Al cierre: `npm run lint` pasa en ambos workspaces, 69 pruebas automáticas en
-verde (45 del API, 24 de la web), y el build compila.
+Al cierre: `npm run lint` pasa en ambos workspaces, 91 pruebas automáticas en
+verde (61 del API, 30 de la web), y el build compila.
 
 Comprobado contra datos reales: última cita a las 18:00 de lunes a viernes y a
 las 14:00 los sábados; no se ofrecen horas ya pasadas; y una cita a domicilio

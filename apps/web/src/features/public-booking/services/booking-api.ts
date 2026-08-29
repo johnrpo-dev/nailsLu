@@ -5,6 +5,8 @@ export type AvailabilityResponse = {
   date: string;
   durationMinutes: number;
   slots: string[];
+  /** Nombre del festivo si ese dia lo es, para poder decir por que esta cerrado. */
+  holiday: string | null;
 };
 
 export function getAvailability(

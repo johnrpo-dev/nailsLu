@@ -22,6 +22,12 @@ export class AvailabilityController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get("admin/availability/holidays")
+  listHolidays() {
+    return this.availability.proximosFestivos();
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get("admin/availability/blocks")
   listBlocks(@Query() query: ListBlocksQueryDto) {
     return this.availability.listBlocks(query);

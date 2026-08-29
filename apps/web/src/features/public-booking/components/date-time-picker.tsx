@@ -35,6 +35,7 @@ export function DateTimePicker({
   onTimeChange: (time: string) => void;
 }) {
   const [slots, setSlots] = useState<string[]>([]);
+  const [festivo, setFestivo] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
@@ -68,6 +69,7 @@ export function DateTimePicker({
       .then((response) => {
         if (controller.signal.aborted) return;
         setSlots(response.slots);
+        setFestivo(response.holiday);
         setStatus("ready");
         // Se conserva la hora elegida si sigue libre; si no, se limpia en vez
         // de mover a la clienta a un horario que no pidio.
@@ -236,7 +238,18 @@ export function DateTimePicker({
           </motion.div>
         ) : (
           <div className="rounded-3xl border border-dashed border-[hsl(var(--border))] p-5 text-sm leading-6 text-[hsl(var(--muted))]">
-            No hay espacios para esta duración. Prueba otro día o quita un servicio.
+            {/*
+              Decir el nombre del festivo evita que parezca un fallo: sin eso, un
+              dia entero sin horarios se lee como que la pagina no carga bien.
+            */}
+            {festivo ? (
+              <>
+                Cerrado por festivo: <strong className="text-[hsl(var(--foreground))]">{festivo}</strong>. Elige
+                otro día.
+              </>
+            ) : (
+              "No hay espacios para esta duración. Prueba otro día o quita un servicio."
+            )}
           </div>
         )}
       </div>

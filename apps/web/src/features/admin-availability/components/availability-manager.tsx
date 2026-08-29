@@ -12,6 +12,7 @@ import {
   type BusinessHour,
 } from "../services/availability-admin-api";
 import { BlocksEditor } from "./blocks-editor";
+import { HolidaysList } from "./holidays-list";
 import { WeeklyHoursEditor } from "./weekly-hours-editor";
 
 export function AvailabilityManager() {
@@ -71,6 +72,7 @@ export function AvailabilityManager() {
         ) : (
           <>
             <WeeklyHoursEditor hours={hours} onSaved={setHours} />
+            <HolidaysList blocks={blocks} />
             <BlocksEditor blocks={blocks} hours={hours} onChange={setBlocks} />
           </>
         )}

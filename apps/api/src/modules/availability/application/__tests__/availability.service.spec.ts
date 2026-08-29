@@ -350,3 +350,51 @@ describe("traslado a domicilio", () => {
     expect(slots).toContain("11:00");
   });
 });
+
+describe("festivos", () => {
+  it("un festivo no ofrece ninguna franja aunque el horario este abierto", async () => {
+    // 25 de diciembre de 2026, viernes: dia laborable segun el horario semanal.
+    const s = new AvailabilityService(
+      prismaFalso({ horarios: [{ weekday: 5, startTime: "08:00", endTime: "18:00", isActive: true }] }),
+    );
+    const { slots, holiday } = await s.listSlots({ date: "2026-12-25", durationMinutes: 60 });
+
+    expect(slots).toHaveLength(0);
+    expect(holiday).toBe("Navidad");
+  });
+
+  it("abrir el festivo a mano vale, y solo por las horas indicadas", async () => {
+    // Si decide trabajar la manana del 25, se ofrece esa manana y nada mas: no
+    // se recupera la jornada completa del horario semanal.
+    const s = new AvailabilityService(
+      prismaFalso({
+        horarios: [{ weekday: 5, startTime: "08:00", endTime: "18:00", isActive: true }],
+        bloqueos: [{ type: "AVAILABLE", startTime: "09:00", endTime: "12:00" }],
+      }),
+    );
+    const { slots } = await s.listSlots({ date: "2026-12-25", durationMinutes: 60 });
+
+    expect(slots[0]).toBe("09:00");
+    expect(slots.at(-1)).toBe("12:00");
+  });
+
+  it("el dia siguiente a un festivo es normal", async () => {
+    const s = new AvailabilityService(
+      prismaFalso({ horarios: [{ weekday: 6, startTime: "08:00", endTime: "14:00", isActive: true }] }),
+    );
+    const { slots, holiday } = await s.listSlots({ date: "2026-12-26", durationMinutes: 60 });
+
+    expect(holiday).toBeNull();
+    expect(slots.length).toBeGreaterThan(0);
+  });
+
+  it("cierra el festivo trasladado, no la fecha original", async () => {
+    const jornadaLunes = [{ weekday: 1, startTime: "08:00", endTime: "18:00", isActive: true }];
+    const s = new AvailabilityService(prismaFalso({ horarios: jornadaLunes }));
+
+    // Reyes cae el martes 6 de enero de 2026 y se celebra el lunes 12.
+    const celebrado = await s.listSlots({ date: "2026-01-12", durationMinutes: 60 });
+    expect(celebrado.slots).toHaveLength(0);
+    expect(celebrado.holiday).toBe("Reyes Magos");
+  });
+});

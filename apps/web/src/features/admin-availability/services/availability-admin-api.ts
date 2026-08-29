@@ -45,3 +45,10 @@ export function createBlock(input: {
 export function deleteBlock(id: string) {
   return apiDelete<AvailabilityBlock>(`/admin/availability/blocks/${id}`);
 }
+
+/** Festivo de Colombia, tal como lo calcula el API. */
+export type Holiday = { date: string; name: string };
+
+export function listHolidays(signal?: AbortSignal) {
+  return apiGet<Holiday[]>("/admin/availability/holidays", signal);
+}

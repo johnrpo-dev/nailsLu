@@ -1,8 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { MINUTOS_TRASLADO_DOMICILIO } from "../../../common/booking-rules";
+import { festivoDe, festivosDe } from "../../../common/festivos-colombia";
 import { ACTIVE_BOOKING_STATUSES, AvailabilityBlockType, ServiceLocation } from "../../../common/enums";
 import { PrismaService } from "../../../prisma/prisma.service";
-import { addMinutes, ahoraEnElSalon, minutesFromTime, rangesOverlap, timeFromMinutes } from "./time.utils";
+import {
+  addMinutes,
+  ahoraEnElSalon,
+  minutesFromTime,
+  rangesOverlap,
+  timeFromMinutes,
+  todayIsoDate,
+} from "./time.utils";
 
 type AvailabilityQuery = {
   date: string;
@@ -67,17 +75,24 @@ export class AvailabilityService {
       },
     });
 
+    const abiertas = blocks
+      .filter((b) => b.type === AvailabilityBlockType.AVAILABLE)
+      .map((b) => ({ startTime: b.startTime, endTime: b.endTime }));
+
     /**
      * Las ventanas abiertas del dia son el horario base mas las excepciones de
      * tipo AVAILABLE, que sirven para abrir un domingo o extender una tarde
-     * puntual. Antes se ignoraban y el enum no tenia ningun efecto.
+     * puntual.
+     *
+     * En festivo el horario base no cuenta: el salon esta cerrado salvo que se
+     * haya abierto ese dia a mano. Y cuando se abre, valen solo las horas que
+     * se indicaron, no la jornada completa: quien abre un 25 de diciembre suele
+     * hacerlo unas horas, no el dia entero.
      */
-    const ventanas: Ventana[] = [
-      ...businessHours.map((h) => ({ startTime: h.startTime, endTime: h.endTime })),
-      ...blocks
-        .filter((b) => b.type === AvailabilityBlockType.AVAILABLE)
-        .map((b) => ({ startTime: b.startTime, endTime: b.endTime })),
-    ];
+    const festivo = festivoDe(query.date);
+    const ventanas: Ventana[] = festivo
+      ? abiertas
+      : [...businessHours.map((h) => ({ startTime: h.startTime, endTime: h.endTime })), ...abiertas];
 
     const bloqueados = blocks.filter((b) => b.type === AvailabilityBlockType.BLOCKED);
     const slots = new Set<string>();
@@ -96,7 +111,7 @@ export class AvailabilityService {
      */
     const ahora = ahoraEnElSalon();
     if (query.date < ahora.fecha) {
-      return { date: query.date, durationMinutes: query.durationMinutes, slots: [] };
+      return { date: query.date, durationMinutes: query.durationMinutes, slots: [], holiday: festivo };
     }
     const minutoMinimo = query.date === ahora.fecha ? ahora.minutos : -1;
 
@@ -151,12 +166,32 @@ export class AvailabilityService {
       date: query.date,
       durationMinutes: query.durationMinutes,
       slots: [...slots].sort(),
+      /** Nombre del festivo, para poder decir por que no hay horarios. */
+      holiday: festivo,
     };
   }
 
   async assertSlotAvailable(query: AvailabilityQuery & { startTime: string; ignoreBookingId?: string }) {
     const slots = await this.listSlots(query);
     return slots.slots.includes(query.startTime);
+  }
+
+  /**
+   * Proximos festivos, para que el panel los muestre antes de que lleguen.
+   *
+   * Se cierran solos, asi que la duena no tiene que hacer nada; verlos sirve
+   * para lo contrario, decidir si va a trabajar alguno y abrirlo a mano.
+   */
+  proximosFestivos(cuantos = 8) {
+    const hoy = todayIsoDate();
+    const ano = Number(hoy.slice(0, 4));
+    // Se miran dos anos para que en diciembre sigan apareciendo los de enero.
+    const todos = [...festivosDe(ano), ...festivosDe(ano + 1)]
+      .filter(([fecha]) => fecha >= hoy)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(0, cuantos);
+
+    return todos.map(([date, name]) => ({ date, name }));
   }
 
   // --- Bloqueos y excepciones -------------------------------------------------
