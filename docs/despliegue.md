@@ -56,7 +56,16 @@ En `apps/web/.env.local`:
 
 - `NEXT_PUBLIC_API_URL="https://nailslu.com/api"`
 - `NEXT_PUBLIC_SITE_URL="https://nailslu.com"`
-- `NEXT_PUBLIC_WHATSAPP_NUMBER` con el numero del spa.
+- `NEXT_PUBLIC_WHATSAPP_NUMBER="573045442496"`
+
+**Ojo con el numero.** Es el 304 544 2496 de Yeri, con indicativo y sin signos.
+En desarrollo hay otro distinto configurado a proposito, para hacer pruebas sin
+molestarla: si copias el `.env.local` de tu equipo al servidor, las clientas le
+escribiran al numero de pruebas y ella no se entera de ninguna cita.
+
+El sitio no compila para produccion si esta variable falta o tiene menos de 10
+digitos, pero nada puede detectar que el numero sea el equivocado. Comprueba
+este a mano.
 
 ## 4. Base de datos y compilacion
 
