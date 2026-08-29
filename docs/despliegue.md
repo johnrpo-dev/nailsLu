@@ -274,6 +274,16 @@ Si el seed falla con `Cannot find module '.prisma/client/default'`, el cliente
 de Prisma no se genero. Se arregla con `sudo -u nailslu -H npm run db:generate`
 y se repite el seed.
 
+**Comprueba que la base se creo donde toca antes de seguir:**
+
+```bash
+ls -la /srv/nailslu/apps/api/prisma/*.db
+```
+
+`produccion.db` tiene que pesar mas de 100 KB. Si pesa 0 y aparece un `dev.db`
+con el peso real, los comandos escribieron en la base de desarrollo: falta
+`DATABASE_URL` en el entorno. Revisa `apps/api/.env` y repite los dos comandos.
+
 - `db:deploy` crea las tablas. **No uses `db:migrate` en el servidor**: eso es
   para desarrollo y puede pedir borrar datos.
 - `db:seed` crea la cuenta del panel y el catálogo inicial. Solo la primera vez;
@@ -395,6 +405,7 @@ scp -P TU_PUERTO_SSH john@TU_IP:/srv/nailslu/backups/nailslu-*.db ./copias-local
 | Error al subir una foto | La carpeta `uploads` no existe o no está en `ReadWritePaths` del servicio |
 | El build muere sin explicación | Falta memoria. Ver la nota de memoria de intercambio abajo |
 | `Cannot find module '.prisma/client/default'` | Falta `npm run db:generate` |
+| El sitio carga pero el API devuelve 500 | La base esta vacia: el seed escribio en `dev.db`. Comprobar tamaños con `ls -la apps/api/prisma/*.db` |
 
 ---
 
