@@ -274,6 +274,66 @@ export class BookingsService {
     }
   }
 
+  /**
+   * Ajusta el traslado de una cita a domicilio.
+   *
+   * Los 50 minutos por defecto son el peor caso, porque al reservar nadie sabe
+   * todavia donde vive la clienta. Cuando la duena ve la direccion suele poder
+   * bajarlos, y eso le devuelve franjas a la agenda: una clienta a diez minutos
+   * no deberia bloquearle casi dos horas.
+   *
+   * Lo decide ella y no la clienta, que no tiene forma de saber cuanto se tarda
+   * en llegar y ademas tendria un incentivo para poner el minimo.
+   */
+  async updateTravelBuffer(id: string, minutes: number) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+      select: { id: true, scheduledDate: true, startTime: true, endTime: true, staffId: true, serviceLocation: true },
+    });
+    if (!booking) throw new BadRequestException("La reserva ya no existe");
+    if (booking.serviceLocation !== ServiceLocation.DOMICILIO) {
+      throw new BadRequestException("Solo las citas a domicilio tienen traslado");
+    }
+
+    /*
+     * Subir el margen puede pisar la cita de al lado, que se acepto contando
+     * con el hueco anterior. Se comprueba antes de guardar en vez de dejar la
+     * agenda con dos citas solapadas y que lo descubra el dia de la cita.
+     */
+    const nuevo = huecoOcupado(booking.startTime, booking.endTime, minutes);
+    const otras = await this.prisma.booking.findMany({
+      where: {
+        scheduledDate: booking.scheduledDate,
+        staffId: booking.staffId,
+        status: { in: ACTIVE_BOOKING_STATUSES },
+        id: { not: booking.id },
+      },
+      select: { startTime: true, endTime: true, travelBufferMinutes: true },
+    });
+
+    const choca = otras.some((otra) => {
+      const ocupado = huecoOcupado(otra.startTime, otra.endTime, otra.travelBufferMinutes);
+      return rangesOverlap(nuevo.inicio, nuevo.fin, ocupado.inicio, ocupado.fin);
+    });
+    if (choca) {
+      throw new ConflictException("Con ese traslado la cita se cruza con otra del mismo dia");
+    }
+
+    return this.prisma.booking.update({
+      where: { id },
+      select: CAMPOS_RESERVA,
+      data: {
+        travelBufferMinutes: minutes,
+        events: {
+          create: {
+            eventType: "BOOKING_TRAVEL_BUFFER_UPDATED",
+            payload: JSON.stringify({ minutes }),
+          },
+        },
+      },
+    });
+  }
+
   updateStatus(id: string, status: BookingStatusValue) {
     return this.prisma.booking.update({
       where: { id },

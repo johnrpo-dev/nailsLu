@@ -27,3 +27,13 @@ export function listAdminBookings(scope: BookingScope, signal?: AbortSignal) {
 export function updateBookingStatus(id: string, status: BookingStatus) {
   return apiPatch<AdminBooking>(`/admin/bookings/${id}/status`, { status });
 }
+
+/**
+ * Ajusta el traslado de una cita a domicilio.
+ *
+ * Devuelve la reserva actualizada, para que la tarjeta refleje el hueco nuevo
+ * sin recargar toda la lista.
+ */
+export function updateTravelBuffer(id: string, minutes: number) {
+  return apiPatch<AdminBooking>(`/admin/bookings/${id}/travel-buffer`, { minutes });
+}

@@ -6,6 +6,7 @@ import { BookingsService } from "../application/bookings.service";
 import { CreatePublicBookingDto } from "./dto/create-public-booking.dto";
 import { ListBookingsQueryDto } from "./dto/list-bookings-query.dto";
 import { UpdateBookingStatusDto } from "./dto/update-booking-status.dto";
+import { UpdateTravelBufferDto } from "./dto/update-travel-buffer.dto";
 
 @Controller()
 export class BookingsController {
@@ -50,5 +51,11 @@ export class BookingsController {
   @Patch("admin/bookings/:id/status")
   updateStatus(@Param("id") id: string, @Body() dto: UpdateBookingStatusDto) {
     return this.bookings.updateStatus(id, dto.status);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch("admin/bookings/:id/travel-buffer")
+  updateTravelBuffer(@Param("id") id: string, @Body() dto: UpdateTravelBufferDto) {
+    return this.bookings.updateTravelBuffer(id, dto.minutes);
   }
 }

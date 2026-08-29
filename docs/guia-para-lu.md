@@ -78,6 +78,32 @@ horas a clientas nuevas. Si necesitas cancelar una cita existente, hazlo desde
 
 Para cambiar la contraseña. Nada más por ahora.
 
+## Citas a domicilio
+
+Al reservar, la clienta elige si viene al spa o si vas tú. Si elige domicilio
+tiene que escribir su dirección, así que ya la tienes antes de salir. En el
+panel esas citas salen destacadas y la dirección es un enlace: al tocarlo se
+abre en Google Maps.
+
+### El tiempo de traslado
+
+Cada cita a domicilio bloquea **50 minutos antes y 50 después**. No es un
+capricho: para estar a las 4:00 en casa de la clienta tienes que salir sobre
+las 3:10, y al terminar todavía tienes que volver. Si ese rato no se bloqueara,
+la página te agendaría otra cita encima.
+
+Por eso verás huecos en la agenda que **no son tiempo libre**.
+
+Los 50 minutos son el caso más lejano, y se ponen por defecto porque cuando
+alguien reserva todavía no sabemos dónde vive. **Cuando veas la dirección,
+puedes bajarlos.** En cada cita a domicilio hay un desplegable que dice
+"Traslado": si la clienta vive a diez minutos, lo cambias a 10 y esas horas
+vuelven a quedar libres para otras citas.
+
+Si eliges un tiempo que haría que la cita se cruce con otra del mismo día, el
+panel no te deja y te lo dice. No puedes dejar la agenda con dos citas encima
+por error.
+
 ## Cómo reserva una clienta
 
 Entra al sitio, elige uno o varios servicios, ve las horas libres, deja su

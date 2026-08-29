@@ -15,6 +15,7 @@ import { restarMinutos, sumarMinutos } from "@/shared/lib/reglas-agenda";
 import {
   listAdminBookings,
   updateBookingStatus,
+  updateTravelBuffer,
   type AdminBooking,
   type BookingScope,
 } from "../services/bookings-admin-api";
@@ -40,6 +41,28 @@ const ESTILO_ESTADO: Record<BookingStatus, string> = {
   COMPLETED: "border-[hsl(var(--border))] bg-[hsl(var(--surface))] text-[hsl(var(--muted))]",
   NO_SHOW: "border-[hsl(var(--border))] bg-[hsl(var(--surface))] text-[hsl(var(--muted))]",
 };
+
+/**
+ * Opciones de traslado.
+ *
+ * Valores redondos en vez de un campo libre: se elige con el pulgar entre
+ * clienta y clienta, y un desplegable corto es mas rapido que teclear. Si el
+ * valor guardado no esta en la lista, se anade para no perderlo al abrirlo.
+ */
+const OPCIONES_TRASLADO = [0, 10, 15, 20, 30, 40, 50, 60, 90];
+
+/**
+ * Opciones para una cita concreta.
+ *
+ * Si el valor guardado no esta en la lista (porque cambio el valor por defecto,
+ * o porque se ajusto desde otro sitio), se anade en su orden. Sin esto el
+ * desplegable apareceria vacio y el primer cambio pisaria el valor real.
+ */
+function opcionesTraslado(actual: number) {
+  return OPCIONES_TRASLADO.includes(actual)
+    ? OPCIONES_TRASLADO
+    : [...OPCIONES_TRASLADO, actual].sort((a, b) => a - b);
+}
 
 export function BookingsBoard() {
   const [scope, setScope] = useState<BookingScope>("active");
@@ -95,6 +118,31 @@ export function BookingsBoard() {
       }
     },
     [scope, showToast],
+  );
+
+  const cambiarTraslado = useCallback(
+    async (booking: AdminBooking, minutos: number) => {
+      setActualizando(booking.id);
+      try {
+        const actualizada = await updateTravelBuffer(booking.id, minutos);
+        setBookings((actuales) =>
+          actuales.map((item) => (item.id === booking.id ? { ...item, ...actualizada } : item)),
+        );
+        showToast({
+          title: minutos === 0 ? "Traslado quitado" : `Traslado: ${minutos} min`,
+          description: "La agenda se recalculó con el hueco nuevo.",
+        });
+      } catch (error) {
+        showToast({
+          title: "No pudimos cambiar el traslado",
+          description: error instanceof ApiError ? error.message : "Intenta de nuevo.",
+          variant: "error",
+        });
+      } finally {
+        setActualizando(null);
+      }
+    },
+    [showToast],
   );
 
   const agrupadas = useMemo(() => {
@@ -225,14 +273,40 @@ export function BookingsBoard() {
                               la agenda que si no pareceria tiempo libre: la
                               siguiente cita no empieza cuando termina esta.
                             */}
-                            {booking.travelBufferMinutes > 0 ? (
-                              <p className="text-xs font-semibold text-[hsl(var(--muted))]">
-                                Agenda bloqueada de{" "}
-                                {formatHora(restarMinutos(booking.startTime, booking.travelBufferMinutes))} a{" "}
-                                {formatHora(sumarMinutos(booking.endTime, booking.travelBufferMinutes))}, con el
-                                traslado de ida y vuelta ({formatDuration(booking.travelBufferMinutes)} cada uno).
-                              </p>
-                            ) : null}
+                            <p className="text-xs font-semibold text-[hsl(var(--muted))]">
+                              {booking.travelBufferMinutes > 0 ? (
+                                <>
+                                  Agenda bloqueada de{" "}
+                                  {formatHora(restarMinutos(booking.startTime, booking.travelBufferMinutes))} a{" "}
+                                  {formatHora(sumarMinutos(booking.endTime, booking.travelBufferMinutes))}, contando el
+                                  viaje de ida y vuelta.
+                                </>
+                              ) : (
+                                <>Sin tiempo de traslado reservado.</>
+                              )}
+                            </p>
+
+                            {/*
+                              El valor por defecto son 50 minutos, el peor caso,
+                              porque al reservar nadie sabe donde vive la
+                              clienta. Al verlo aqui se puede ajustar: bajarlo
+                              devuelve franjas libres a la agenda.
+                            */}
+                            <label className="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold">
+                              Traslado
+                              <select
+                                className="focus-ring min-h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-1 font-semibold"
+                                disabled={actualizando === booking.id}
+                                onChange={(event) => cambiarTraslado(booking, Number(event.target.value))}
+                                value={booking.travelBufferMinutes}
+                              >
+                                {opcionesTraslado(booking.travelBufferMinutes).map((minutos) => (
+                                  <option key={minutos} value={minutos}>
+                                    {minutos === 0 ? "Sin traslado" : formatDuration(minutos)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
                             {booking.address ? (
                               <a
                                 className="focus-ring rounded-xl text-sm leading-6 underline decoration-dotted underline-offset-4"

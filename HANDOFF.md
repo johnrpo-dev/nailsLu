@@ -1,6 +1,6 @@
 # Pendientes de NAILS LU SPA
 
-Estado al 28 de agosto de 2026. Repositorio: github.com/johnrpo-dev/nailsLu
+Estado al 29 de agosto de 2026. Repositorio: github.com/johnrpo-dev/nailsLu
 
 **El código está terminado y publicado.** Lo que falta son decisiones, datos y
 un servidor. Nada de esta lista se arregla programando.
@@ -95,6 +95,32 @@ clienta.
 La dirección tampoco se muestra, por lo mismo: si atiende en casa, publicarla
 expone su domicilio. Ambos campos se muestran solos si algún día se rellenan.
 
+### Citas a domicilio y tiempo de traslado
+
+La clienta elige spa o domicilio al reservar; a domicilio la dirección es
+obligatoria y solo se guarda en ese caso.
+
+Cada cita a domicilio bloquea 50 minutos **antes y después** del servicio. El
+margen se guarda en cada reserva, no se recalcula: si mañana cambia la regla,
+las citas ya agendadas conservan el hueco con el que se aceptaron.
+
+Los 50 son el peor caso, porque al reservar no se sabe dónde vive la clienta.
+Yeri puede bajarlo por cita desde el panel, y eso devuelve franjas libres. El
+valor por defecto está en `apps/api/src/common/booking-rules.ts`.
+
+El margen separa citas entre sí, pero **no recorta la jornada**: a la primera
+cita del día se puede salir de casa directamente.
+
+### La clienta puede consultar y cancelar sola
+
+`/reserva/[token]` muestra el estado de la cita y permite cancelarla. Cancelar
+libera la franja automáticamente, sin que Yeri tenga que hacer nada — así que
+verá citas desaparecer del panel sin haberlas tocado.
+
+El enlace va en el mensaje de WhatsApp y queda guardado en el navegador de la
+clienta. La página no expone la dirección ni el teléfono, solo fecha, hora y
+modalidad.
+
 ### Los servicios no llevan precio
 
 A varias clientas no se les cobra lo mismo. Ver la nota en el repositorio.
@@ -116,14 +142,17 @@ A varias clientas no se les cobra lo mismo. Ver la nota en el repositorio.
 
 ## 5. Suelto
 
-Hay una **reserva de prueba** en la base local: "Prueba Claude", 28 de agosto a
-las 08:00, estado pendiente. Se creó para verificar el diálogo de confirmación.
-Se cancela desde el panel.
+En la base local hay una **excepción de disponibilidad de pruebas** que abre el
+lunes 31 de agosto entero (00:00–23:59) y bloquea de 03:00 a 15:30. Por eso ese
+día ofrece citas de madrugada. Se borra desde el panel, en Disponibilidad.
 
 ---
 
 ## Estado de la verificación
 
-Al cierre: `npm run lint` pasa en ambos workspaces, 36 pruebas automáticas en
-verde, y el build compila. Las reglas de horario están comprobadas contra datos
-reales: última cita a las 18:00 de lunes a viernes, a las 14:00 los sábados.
+Al cierre: `npm run lint` pasa en ambos workspaces, 69 pruebas automáticas en
+verde (45 del API, 24 de la web), y el build compila.
+
+Comprobado contra datos reales: última cita a las 18:00 de lunes a viernes y a
+las 14:00 los sábados; no se ofrecen horas ya pasadas; y una cita a domicilio
+de 10:00 a 11:30 deja la siguiente franja libre en las 12:30.
