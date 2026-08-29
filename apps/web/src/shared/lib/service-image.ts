@@ -1,11 +1,11 @@
 import type { CSSProperties } from "react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { apiBaseUrl } from "@/shared/api/base-url";
 
 /** Las fotos las sirve el API, que corre en otro origen que la web. */
 export function urlDeFoto(imageUrl?: string | null) {
   if (!imageUrl) return null;
-  return imageUrl.startsWith("http") ? imageUrl : `${API_BASE_URL}${imageUrl}`;
+  return imageUrl.startsWith("http") ? imageUrl : `${apiBaseUrl()}${imageUrl}`;
 }
 
 /**

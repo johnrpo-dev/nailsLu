@@ -1,3 +1,4 @@
+import { apiBaseUrl } from "@/shared/api/base-url";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/shared/api/client";
 
 export type AdminService = {
@@ -41,8 +42,6 @@ export function deactivateService(id: string) {
   return apiDelete<AdminService>(`/admin/services/${id}`);
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
 /**
  * Sube la foto de un servicio.
  *
@@ -54,7 +53,7 @@ export async function uploadServiceImage(id: string, file: File, token: string |
   const datos = new FormData();
   datos.append("file", file);
 
-  const respuesta = await fetch(`${API_BASE_URL}/admin/services/${id}/image`, {
+  const respuesta = await fetch(`${apiBaseUrl()}/admin/services/${id}/image`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: datos,

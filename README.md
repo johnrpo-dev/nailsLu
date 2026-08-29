@@ -46,6 +46,11 @@ npm run dev
 ```
 
 Web en `http://localhost:3000`, API en `http://localhost:3001`.
+
+Para abrirlo desde el celular, en la misma red Wi-Fi, se usa la IP del equipo:
+`http://TU-IP:3000`. No hay que cambiar nada: cuando `NEXT_PUBLIC_API_URL`
+apunta a `localhost` pero la pagina llega desde otro host, el sitio resuelve el
+API contra ese mismo host. En Windows la IP se ve con `ipconfig`.
 Credenciales del seed: `admin@spa.local` / `Admin12345!`.
 
 **Esa contrasena esta en `prisma/seed.ts`, que es publico.** Al entrar, el panel

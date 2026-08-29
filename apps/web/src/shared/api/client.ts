@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { apiBaseUrl } from "./base-url";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -32,7 +32,7 @@ async function request<T>(path: string, init?: RequestInit & { signal?: AbortSig
   const token = tokenProvider?.() ?? null;
 
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetch(`${apiBaseUrl()}${path}`, {
       ...init,
       headers: {
         "Content-Type": "application/json",
