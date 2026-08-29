@@ -116,6 +116,13 @@ export function BookingConfirmationDialog({
                   </div>
                 </div>
 
+                {/*
+                  El aviso por WhatsApp es la unica accion del dialogo: sin un
+                  boton de "Listo" al lado, confirmar la cita y avisar son el
+                  mismo gesto. Cerrar sigue siendo posible con la X de arriba,
+                  porque un dialogo del que no se puede salir es una trampa
+                  para quien navega con teclado o lector de pantalla.
+                */}
                 {hayWhatsappConfigurado() ? (
                   <div className="mt-6 grid gap-2">
                     <Button asChild className="w-full" size="lg">
@@ -137,16 +144,22 @@ export function BookingConfirmationDialog({
                       </a>
                     </Button>
                     <p className="text-center text-xs leading-5 text-[hsl(var(--muted))]">
-                      Tu reserva ya quedó registrada. Esto solo nos avisa más rápido.
+                      El mensaje ya va escrito: solo tienes que enviarlo para que confirmemos tu turno.
                     </p>
                   </div>
-                ) : null}
-
-                <Dialog.Close asChild>
-                  <Button className="mt-3 w-full" size="lg" type="button" variant="secondary">
-                    Listo
-                  </Button>
-                </Dialog.Close>
+                ) : (
+                  /*
+                    Sin numero no hay enlace que ofrecer. `next.config.mjs`
+                    impide compilar para produccion en ese estado, asi que esto
+                    solo se ve en desarrollo: mejor decir que falta configurar
+                    que ofrecer un "Listo" que aparente normalidad.
+                  */
+                  <p className="mt-6 rounded-[1.5rem] border border-[hsl(var(--danger)/0.32)] bg-[hsl(var(--danger)/0.06)] p-4 text-sm leading-6">
+                    Falta configurar el número de WhatsApp del spa
+                    (<code className="font-mono text-xs">NEXT_PUBLIC_WHATSAPP_NUMBER</code>). Tu reserva
+                    quedó guardada, pero no podemos avisar desde aquí.
+                  </p>
+                )}
               </motion.div>
             </Dialog.Content>
           </Dialog.Portal>
