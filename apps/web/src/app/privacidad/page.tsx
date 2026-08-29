@@ -9,9 +9,11 @@ export const metadata: Metadata = {
 };
 
 /**
- * PLANTILLA. Debe revisarla un abogado antes de publicar, y hay que completar
- * los datos del responsable en `shared/lib/privacidad.ts`. Una política
- * genérica copiada de internet no protege a nadie.
+ * Los datos del responsable viven en `shared/lib/privacidad.ts`.
+ *
+ * El texto describe lo que la app hace de verdad, no es una plantilla copiada
+ * de internet, pero no lo ha revisado un abogado. Conviene que lo lea alguien
+ * que sepa antes de que el sitio reciba clientas reales.
  */
 export default function PoliticaPage() {
   return (
@@ -36,7 +38,9 @@ export default function PoliticaPage() {
           <ul className="mt-3 grid gap-1 text-[hsl(var(--muted))]">
             <li><strong className="text-[hsl(var(--foreground))]">Negocio:</strong> {RESPONSABLE.nombre}</li>
             <li><strong className="text-[hsl(var(--foreground))]">Responsable:</strong> {RESPONSABLE.responsable}</li>
-            <li><strong className="text-[hsl(var(--foreground))]">Identificación:</strong> {RESPONSABLE.identificacion}</li>
+            {RESPONSABLE.identificacion ? (
+              <li><strong className="text-[hsl(var(--foreground))]">Identificación:</strong> {RESPONSABLE.identificacion}</li>
+            ) : null}
             {RESPONSABLE.direccion ? (
               <li><strong className="text-[hsl(var(--foreground))]">Dirección:</strong> {RESPONSABLE.direccion}, {RESPONSABLE.ciudad}</li>
             ) : (

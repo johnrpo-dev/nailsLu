@@ -65,7 +65,8 @@ async function main() {
     update: {},
     create: {
       email: EMAIL_ADMIN,
-      name: "Admin Spa",
+      // El panel saluda con este nombre: "Hola, Yeri".
+      name: process.env.SEED_ADMIN_NAME ?? "Yeri",
       role: UserRole.OWNER,
       passwordHash: await bcrypt.hash(valor, 12),
     },
