@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CalendarDays, Check, Clock3, Phone, RotateCw, UserRound, X } from "lucide-react";
+import { AlertCircle, CalendarDays, Check, Clock3, House, Phone, RotateCw, Store, UserRound, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { BookingStatus } from "@spa/shared";
 import { Badge } from "@/components/ui/badge";
@@ -208,6 +208,33 @@ export function BookingsBoard() {
                         <p className="mt-2 text-sm leading-6 text-[hsl(var(--muted))]">
                           {booking.services.map((s) => s.serviceNameSnapshot).join(", ")}
                         </p>
+
+                        {/*
+                          El domicilio se destaca porque cambia su jornada: hay
+                          que salir, desplazarse y volver. Una cita en el spa es
+                          lo normal y no necesita gritar.
+                        */}
+                        {booking.serviceLocation === "DOMICILIO" ? (
+                          <div className="mt-3 grid gap-1 rounded-2xl border border-[hsl(var(--accent)/0.5)] bg-[hsl(var(--accent)/0.14)] p-3">
+                            <p className="flex items-center gap-2 text-sm font-black">
+                              <House aria-hidden="true" className="size-4 shrink-0" /> A domicilio
+                            </p>
+                            {booking.address ? (
+                              <a
+                                className="focus-ring rounded-xl text-sm leading-6 underline decoration-dotted underline-offset-4"
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(booking.address)}`}
+                                rel="noreferrer"
+                                target="_blank"
+                              >
+                                {booking.address}
+                              </a>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-[hsl(var(--muted))]">
+                            <Store aria-hidden="true" className="size-3.5 shrink-0" /> En el spa
+                          </p>
+                        )}
                         {booking.notes ? (
                           <p className="mt-2 rounded-2xl bg-[hsl(var(--surface)/0.7)] p-3 text-sm leading-6">
                             {booking.notes}

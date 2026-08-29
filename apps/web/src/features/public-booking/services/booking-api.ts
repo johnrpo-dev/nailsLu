@@ -30,6 +30,7 @@ export type PublicBookingStatus = {
   startTime: string;
   endTime: string;
   totalDurationMinutes: number;
+  serviceLocation: "SPA" | "DOMICILIO";
 };
 
 export function getPublicBookingStatus(token: string, signal?: AbortSignal) {

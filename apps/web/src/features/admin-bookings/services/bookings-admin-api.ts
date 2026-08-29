@@ -10,6 +10,8 @@ export type AdminBooking = {
   endTime: string;
   totalDurationMinutes: number;
   notes?: string | null;
+  serviceLocation: "SPA" | "DOMICILIO";
+  address?: string | null;
   createdAt: string;
   client: { id: string; fullName: string; phone: string };
   services: { id: string; serviceNameSnapshot: string; durationSnapshotMinutes: number }[];

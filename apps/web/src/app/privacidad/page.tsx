@@ -61,9 +61,17 @@ export default function PoliticaPage() {
             <li>Tu número de teléfono o WhatsApp.</li>
             <li>La nota que escribas voluntariamente sobre tu preferencia.</li>
             <li>Los servicios, la fecha y la hora que elijas.</li>
+            <li>
+              Si pides el servicio a domicilio, <strong className="text-[hsl(var(--foreground))]">tu dirección</strong>.
+              Solo en ese caso: si eliges venir al spa, no te la pedimos ni la guardamos.
+            </li>
           </ul>
           <p className="mt-3 text-[hsl(var(--muted))]">
-            No pedimos documento de identidad, dirección ni datos de pago. No recogemos datos sensibles.
+            La dirección se usa únicamente para llegar a tu cita, se guarda junto a esa cita concreta y
+            desaparece cuando la cita se elimina. No la compartimos con nadie.
+          </p>
+          <p className="mt-3 text-[hsl(var(--muted))]">
+            No pedimos documento de identidad ni datos de pago. No recogemos datos sensibles.
           </p>
         </section>
 

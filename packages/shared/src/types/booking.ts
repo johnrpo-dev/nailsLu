@@ -1,3 +1,5 @@
+export type ServiceLocation = "SPA" | "DOMICILIO";
+
 export type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED" | "NO_SHOW";
 
 export type BookingSummary = {
@@ -28,6 +30,8 @@ export type PublicBookingResult = {
   endTime: string;
   totalDurationMinutes: number;
   notes?: string | null;
+  serviceLocation: ServiceLocation;
+  address?: string | null;
   client: { id: string; fullName: string; phone: string };
   services: BookedServiceSnapshot[];
 };

@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CalendarCheck, Check, Clock3, Copy, ExternalLink, MessageCircle, X } from "lucide-react";
+import { CalendarCheck, Check, Clock3, Copy, ExternalLink, House, MessageCircle, Store, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { PublicBookingResult } from "@spa/shared";
@@ -151,6 +151,17 @@ export function BookingConfirmationDialog({
                       <Clock3 aria-hidden="true" className="size-3.5" />
                       {formatRangoHoras(booking.startTime, booking.endTime)}
                     </Badge>
+                    <Badge>
+                      {booking.serviceLocation === "DOMICILIO" ? (
+                        <>
+                          <House aria-hidden="true" className="size-3.5" /> A domicilio
+                        </>
+                      ) : (
+                        <>
+                          <Store aria-hidden="true" className="size-3.5" /> En el spa
+                        </>
+                      )}
+                    </Badge>
                   </div>
 
                   <ul className="mt-4 grid gap-2">
@@ -220,6 +231,8 @@ export function BookingConfirmationDialog({
                           endTime: booking.endTime,
                           servicios: booking.services.map((s) => s.serviceNameSnapshot),
                           publicToken: booking.publicToken,
+                          serviceLocation: booking.serviceLocation,
+                          address: booking.address,
                         })}
                         /*
                           No sabemos si llego a enviar el mensaje, solo que

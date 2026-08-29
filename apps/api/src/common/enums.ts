@@ -29,6 +29,12 @@ export const BookingSource = {
 } as const;
 export type BookingSource = (typeof BookingSource)[keyof typeof BookingSource];
 
+export const ServiceLocation = {
+  SPA: "SPA",
+  DOMICILIO: "DOMICILIO",
+} as const;
+export type ServiceLocation = (typeof ServiceLocation)[keyof typeof ServiceLocation];
+
 export const AvailabilityBlockType = {
   AVAILABLE: "AVAILABLE",
   BLOCKED: "BLOCKED",

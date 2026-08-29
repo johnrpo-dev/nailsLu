@@ -26,6 +26,8 @@ export function construirAvisoReserva(datos: {
   endTime: string;
   servicios: string[];
   publicToken: string;
+  serviceLocation: "SPA" | "DOMICILIO";
+  address?: string | null;
 }) {
   const lineas = [
     "Hola, acabo de reservar una cita.",
@@ -35,6 +37,10 @@ export function construirAvisoReserva(datos: {
     `Fecha: ${datos.fechaLarga}`,
     `Hora: ${formatHora(datos.startTime)} a ${formatHora(datos.endTime)}`,
     `Servicios: ${datos.servicios.join(", ")}`,
+    // La modalidad va junto a la hora porque cambia lo que ella tiene que
+    // preparar; la direccion solo aparece si hay que desplazarse.
+    `Donde: ${datos.serviceLocation === "DOMICILIO" ? "A domicilio" : "En el spa"}`,
+    ...(datos.serviceLocation === "DOMICILIO" && datos.address ? [`Direccion: ${datos.address}`] : []),
     "",
     // El enlace completo, no un trozo del codigo: asi la clienta conserva en su
     // propia conversacion la forma de consultar o cancelar la cita, aunque

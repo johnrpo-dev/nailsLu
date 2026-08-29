@@ -5,6 +5,7 @@ import {
   ACTIVE_BOOKING_STATUSES,
   BookingSource,
   BookingStatus,
+  ServiceLocation,
   type BookingStatus as BookingStatusValue,
 } from "../../../common/enums";
 import { POLITICA_DATOS_VERSION, RETENCION_INTENTOS_DIAS } from "../../../common/privacy";
@@ -27,6 +28,8 @@ const CAMPOS_RESERVA = {
   endTime: true,
   totalDurationMinutes: true,
   notes: true,
+  serviceLocation: true,
+  address: true,
   source: true,
   createdAt: true,
   client: { select: { id: true, fullName: true, phone: true } },
@@ -78,6 +81,13 @@ export class BookingsService {
         startTime: true,
         endTime: true,
         totalDurationMinutes: true,
+        /*
+         * La modalidad si sale, porque le sirve a la clienta para comprobar que
+         * pidio lo que queria. La direccion no: el codigo viaja en la URL y
+         * puede acabar reenviado, y nadie con ese enlace deberia poder leer
+         * donde vive.
+         */
+        serviceLocation: true,
       },
     });
     if (!booking) {
@@ -111,6 +121,16 @@ export class BookingsService {
   async createPublic(dto: CreatePublicBookingDto, meta: { ip?: string; userAgent?: string }) {
     if (dto.website) {
       throw new BadRequestException("Invalid booking request");
+    }
+
+    /*
+     * En el spa no se acepta direccion. Mas abajo tampoco se guardaria, pero
+     * callarselo dejaria pasar peticiones incoherentes y, si alguien quitara esa
+     * proteccion al refactorizar, empezariamos a almacenar direcciones que nadie
+     * pidio sin que ninguna prueba lo notara.
+     */
+    if (dto.serviceLocation === ServiceLocation.SPA && dto.address) {
+      throw new BadRequestException("No hace falta dirección para atenderte en el spa");
     }
 
     const existing = await this.prisma.booking.findUnique({
@@ -200,6 +220,9 @@ export class BookingsService {
             endTime,
             totalDurationMinutes,
             notes: dto.notes,
+            serviceLocation: dto.serviceLocation,
+            // En el spa nunca se guarda direccion, aunque llegue en la peticion.
+            address: dto.serviceLocation === ServiceLocation.DOMICILIO ? dto.address?.trim() : null,
             // Evidencia de la autorizacion: cuando la dio y que version acepto.
             consentAcceptedAt: new Date(),
             consentPolicyVersion: POLITICA_DATOS_VERSION,

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, ArrowLeft, CalendarCheck, Clock3, RotateCw, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, CalendarCheck, Clock3, House, RotateCw, Store, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { BookingStatus } from "@spa/shared";
@@ -141,6 +141,17 @@ export function BookingStatusCard({ token }: { token: string }) {
                   {formatRangoHoras(booking.startTime, booking.endTime)}
                 </Badge>
                 <Badge>{formatDuration(booking.totalDurationMinutes)}</Badge>
+                <Badge>
+                  {booking.serviceLocation === "DOMICILIO" ? (
+                    <>
+                      <House aria-hidden="true" className="size-3.5" /> A domicilio
+                    </>
+                  ) : (
+                    <>
+                      <Store aria-hidden="true" className="size-3.5" /> En el spa
+                    </>
+                  )}
+                </Badge>
               </div>
             </div>
 

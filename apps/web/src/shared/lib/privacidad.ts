@@ -4,7 +4,7 @@
  * Debe coincidir con POLITICA_DATOS_VERSION del API, que la guarda junto a
  * cada reserva como evidencia de que version acepto cada clienta.
  */
-export const POLITICA_VERSION = "2026-08-28";
+export const POLITICA_VERSION = "2026-08-29";
 
 /**
  * Datos de quien responde por los datos personales.

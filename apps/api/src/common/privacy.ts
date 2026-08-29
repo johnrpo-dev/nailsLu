@@ -7,7 +7,7 @@
  *
  * Debe coincidir con la fecha que muestra la pagina de politica en la web.
  */
-export const POLITICA_DATOS_VERSION = "2026-08-28";
+export const POLITICA_DATOS_VERSION = "2026-08-29";
 
 /** Dias que se conservan los intentos de reserva antes de borrarse. */
 export const RETENCION_INTENTOS_DIAS = 30;
