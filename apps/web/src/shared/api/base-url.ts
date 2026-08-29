@@ -16,6 +16,20 @@ const CONFIGURADA = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 const ES_LOCAL = ["localhost", "127.0.0.1", "[::1]"];
 
+/**
+ * Direccion completa, con su ruta.
+ *
+ * `url.origin` descarta el camino, y eso rompio el primer despliegue real: en
+ * produccion el API vive en `https://dominio.com/api`, asi que al quedarse solo
+ * con el origen todas las peticiones acababan en la web y devolvian 404. En
+ * desarrollo no se veia porque `http://localhost:3001` no tiene ruta.
+ *
+ * La barra final se quita para no acabar con `//` al concatenar el endpoint.
+ */
+function completa(url: URL) {
+  return `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
+}
+
 export function apiBaseUrl() {
   if (typeof window === "undefined") return CONFIGURADA;
 
@@ -23,9 +37,8 @@ export function apiBaseUrl() {
     const url = new URL(CONFIGURADA);
     if (ES_LOCAL.includes(url.hostname) && !ES_LOCAL.includes(window.location.hostname)) {
       url.hostname = window.location.hostname;
-      return url.origin;
     }
-    return url.origin;
+    return completa(url);
   } catch {
     return CONFIGURADA;
   }
