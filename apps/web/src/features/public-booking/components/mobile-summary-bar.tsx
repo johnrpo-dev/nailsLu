@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatDuration } from "@/shared/lib/format";
+import { formatDuration, formatHora } from "@/shared/lib/format";
 
 /**
  * Barra fija en movil.
@@ -38,7 +38,7 @@ export function MobileSummaryBar({
             <div className="min-w-0">
               <p className="truncate text-xs font-semibold text-[hsl(var(--muted))]">
                 {selectedCount === 1 ? "1 servicio" : `${selectedCount} servicios`}
-                {time ? ` · ${time}` : ""}
+                {time ? ` · ${formatHora(time)}` : ""}
               </p>
               <p className="text-lg font-black leading-tight">
                 {durationMinutes ? formatDuration(durationMinutes) : ""}

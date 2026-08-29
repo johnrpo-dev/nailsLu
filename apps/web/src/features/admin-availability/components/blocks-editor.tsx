@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/toast";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
 import { formatLongDate, todayIsoDate } from "@/shared/lib/date";
+import { formatRangoHoras } from "@/shared/lib/format";
 import { createBlock, deleteBlock, type AvailabilityBlock } from "../services/availability-admin-api";
 
 const JORNADA = { inicio: "00:00", fin: "23:59" };
@@ -194,7 +195,7 @@ export function BlocksEditor({
                     >
                       {block.type === "BLOCKED" ? "Cerrado" : "Abierto"}
                     </span>
-                    <Badge>{todoElDiaBloque ? "Todo el día" : `${block.startTime} a ${block.endTime}`}</Badge>
+                    <Badge>{todoElDiaBloque ? "Todo el día" : formatRangoHoras(block.startTime, block.endTime)}</Badge>
                   </div>
                   <p className="mt-2 text-sm font-bold">{formatLongDate(block.date.slice(0, 10))}</p>
                   {block.reason ? (

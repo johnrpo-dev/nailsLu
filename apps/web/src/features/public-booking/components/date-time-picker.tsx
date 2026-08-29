@@ -9,14 +9,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
 import { createRollingDays } from "@/shared/lib/date";
-import { formatDuration } from "@/shared/lib/format";
+import { formatDuration, formatHora } from "@/shared/lib/format";
 import { useRovingFocus } from "@/shared/lib/use-roving-focus";
 import { getAvailability } from "../services/booking-api";
 
 type Status = "idle" | "loading" | "ready" | "error";
 
 const DAY_COLUMNS = 7;
-const SLOT_COLUMNS = 4;
+const SLOT_COLUMNS = 3;
 
 export function DateTimePicker({
   durationMinutes,
@@ -170,7 +170,7 @@ export function DateTimePicker({
         </p>
 
         {status === "loading" ? (
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <Skeleton className="h-12 rounded-full" key={item} />
             ))}
@@ -195,7 +195,7 @@ export function DateTimePicker({
         ) : slots.length ? (
           <motion.div
             aria-labelledby="slots-label"
-            className="grid grid-cols-3 gap-2 sm:grid-cols-4"
+            className="grid grid-cols-2 gap-2 sm:grid-cols-3"
             layout={!reducedMotion}
             role="radiogroup"
           >
@@ -225,7 +225,7 @@ export function DateTimePicker({
                     transition={reducedMotion ? { duration: 0 } : undefined}
                     type="button"
                   >
-                    {slot}
+                    {formatHora(slot)}
                   </motion.button>
                 );
               })}

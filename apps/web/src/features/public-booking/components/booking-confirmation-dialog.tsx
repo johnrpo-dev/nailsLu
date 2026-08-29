@@ -9,7 +9,7 @@ import type { PublicBookingResult } from "@spa/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatLongDate } from "@/shared/lib/date";
-import { formatDuration } from "@/shared/lib/format";
+import { formatDuration, formatRangoHoras } from "@/shared/lib/format";
 import { construirAvisoReserva, hayWhatsappConfigurado } from "@/shared/lib/whatsapp";
 
 export function BookingConfirmationDialog({
@@ -125,7 +125,7 @@ export function BookingConfirmationDialog({
                     </Badge>
                     <Badge>
                       <Clock3 aria-hidden="true" className="size-3.5" />
-                      {booking.startTime} a {booking.endTime}
+                      {formatRangoHoras(booking.startTime, booking.endTime)}
                     </Badge>
                   </div>
 

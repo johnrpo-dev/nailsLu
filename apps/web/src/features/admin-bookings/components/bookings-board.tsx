@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/toast";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
 import { formatLongDate } from "@/shared/lib/date";
-import { formatDuration } from "@/shared/lib/format";
+import { formatDuration, formatRangoHoras } from "@/shared/lib/format";
 import {
   listAdminBookings,
   updateBookingStatus,
@@ -186,7 +186,7 @@ export function BookingsBoard() {
                           </span>
                           <Badge>
                             <Clock3 aria-hidden="true" className="size-3.5" />
-                            {booking.startTime} a {booking.endTime}
+                            {formatRangoHoras(booking.startTime, booking.endTime)}
                           </Badge>
                           <Badge>{formatDuration(booking.totalDurationMinutes)}</Badge>
                         </div>

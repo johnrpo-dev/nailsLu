@@ -8,6 +8,8 @@
  * base aunque la clienta nunca pulse el boton. El panel siempre la muestra.
  */
 
+import { formatHora } from "./format";
+
 /** Numero del spa con indicativo de pais y sin signos: 573001234567. */
 const NUMERO_SPA = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "") ?? "";
 
@@ -30,7 +32,7 @@ export function construirAvisoReserva(datos: {
     `Nombre: ${datos.clientName}`,
     `Telefono: ${datos.phone}`,
     `Fecha: ${datos.fechaLarga}`,
-    `Hora: ${datos.startTime} a ${datos.endTime}`,
+    `Hora: ${formatHora(datos.startTime)} a ${formatHora(datos.endTime)}`,
     `Servicios: ${datos.servicios.join(", ")}`,
     `Codigo: ${datos.publicToken.slice(0, 8)}`,
   ];
