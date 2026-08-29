@@ -18,19 +18,30 @@ export function useRovingFocus({
   columns: number;
   selectedIndex: number;
 }) {
-  const [focusIndex, setFocusIndex] = useState(() => Math.max(selectedIndex, 0));
+  const [focusGuardado, setFocusIndex] = useState(() => Math.max(selectedIndex, 0));
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
   // Solo se mueve el foco del DOM cuando la navegacion vino del teclado, para
   // no robarle el foco a la clienta mientras la lista se recarga sola.
   const shouldFocus = useRef(false);
 
-  useEffect(() => {
-    if (focusIndex > count - 1) setFocusIndex(Math.max(count - 1, 0));
-  }, [count, focusIndex]);
-
-  useEffect(() => {
+  /*
+   * Seguir la seleccion se hace durante el render, no en un efecto. React
+   * documenta este patron para el estado derivado de props: al detectar el
+   * cambio se actualiza y React reinicia el render antes de pintar, sin el
+   * fotograma intermedio con el valor viejo que produce hacerlo en un efecto.
+   */
+  const [selectedVisto, setSelectedVisto] = useState(selectedIndex);
+  if (selectedIndex !== selectedVisto) {
+    setSelectedVisto(selectedIndex);
     if (selectedIndex >= 0) setFocusIndex(selectedIndex);
-  }, [selectedIndex]);
+  }
+
+  /*
+   * Si la lista se encoge (menos franjas al cambiar de dia), el indice
+   * guardado puede quedar fuera de rango. Se acota al leerlo en vez de
+   * guardarlo corregido: no hace falta estado nuevo ni un render extra.
+   */
+  const focusIndex = count > 0 ? Math.min(focusGuardado, count - 1) : 0;
 
   useEffect(() => {
     if (!shouldFocus.current) return;

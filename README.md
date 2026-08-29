@@ -107,6 +107,7 @@ que no pueda usarse en la aplicacion normal.
 - La sesion del panel dura 12 horas (`JWT_ACCESS_TTL`). No hay refresh tokens,
   asi que al vencer hay que volver a entrar.
 - 32 pruebas automaticas sobre la logica de agenda, fechas y claves: `npm test`.
-- Sin configuracion de ESLint todavia, asi que `npm run lint` no corre.
+- `npm run lint` revisa ambos workspaces con ESLint 9 (configuracion plana).
+  La web usa `eslint-config-next`; desde Next 16 `next lint` ya no existe.
 
 La app estatica inicial se conserva en la raiz como prototipo rapido: `index.html`, `styles.css`, `app.js`.

@@ -5,7 +5,7 @@
   "scripts": {
     "start:dev": "nest start --watch",
     "build": "nest build",
-    "lint": "eslint \"src/**/*.ts\"",
+    "lint": "eslint .",
     "prisma": "prisma",
     "start": "node dist/src/main.js",
     "db:deploy": "prisma migrate deploy",
