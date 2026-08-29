@@ -33,7 +33,7 @@ const ETIQUETA_ESTADO: Record<BookingStatus, string> = {
 };
 
 const ESTILO_ESTADO: Record<BookingStatus, string> = {
-  PENDING: "border-[hsl(var(--gold)/0.5)] bg-[hsl(var(--gold)/0.14)] text-[hsl(var(--foreground))]",
+  PENDING: "border-[hsl(var(--border))] bg-[hsl(var(--surface))] text-[hsl(var(--foreground))]",
   CONFIRMED: "border-[hsl(var(--accent)/0.5)] bg-[hsl(var(--accent)/0.16)] text-[hsl(var(--foreground))]",
   CANCELLED: "border-[hsl(var(--danger)/0.4)] bg-[hsl(var(--danger)/0.1)] text-[hsl(var(--foreground))]",
   COMPLETED: "border-[hsl(var(--border))] bg-[hsl(var(--surface))] text-[hsl(var(--muted))]",

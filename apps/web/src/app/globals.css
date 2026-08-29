@@ -10,9 +10,11 @@
   --border: 32 22% 86%;
   --primary: 342 52% 54%;
   --primary-foreground: 0 0% 100%;
-  --accent: 151 20% 48%;
+  /* Dorado del logo. Antes era un verde salvia ajeno a la marca que ademas
+     daba 3.52 de contraste con texto blanco, por debajo del minimo de 4.5.
+     Oscurecido hasta 36% de luminosidad llega a 5.28. */
+  --accent: 36 50% 36%;
   --accent-foreground: 0 0% 100%;
-  --gold: 39 55% 48%;
   --danger: 358 62% 48%;
   --danger-foreground: 0 0% 100%;
   --ring: 342 52% 54%;
@@ -31,9 +33,9 @@
   --border: 28 10% 24%;
   --primary: 346 64% 66%;
   --primary-foreground: 24 16% 7%;
-  --accent: 154 25% 58%;
+  /* En oscuro el dorado va claro y el texto encima es la tinta: 9.98. */
+  --accent: 42 64% 63%;
   --accent-foreground: 24 16% 7%;
-  --gold: 42 64% 63%;
   --danger: 358 72% 68%;
   --danger-foreground: 24 16% 7%;
   --ring: 346 64% 66%;
