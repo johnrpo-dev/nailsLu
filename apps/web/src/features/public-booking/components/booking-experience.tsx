@@ -18,6 +18,7 @@ import { BookingConfirmationDialog } from "./booking-confirmation-dialog";
 import { ContactExpressForm, type ContactFormValues } from "./contact-express-form";
 import { DateTimePicker } from "./date-time-picker";
 import { MobileSummaryBar } from "./mobile-summary-bar";
+import { UltimaReservaAviso } from "./ultima-reserva-aviso";
 
 export function BookingExperience({ brand }: { brand?: ReactNode }) {
   const { services, status, errorMessage, retry } = useServices();
@@ -122,6 +123,10 @@ export function BookingExperience({ brand }: { brand?: ReactNode }) {
                 pantalla, sin registro obligatorio y con confirmación clara.
               </p>
             </motion.div>
+
+            <div className="mt-6">
+              <UltimaReservaAviso />
+            </div>
 
             <div className="mt-8">
               <ServiceCatalog

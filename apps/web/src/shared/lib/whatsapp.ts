@@ -8,6 +8,7 @@
  * base aunque la clienta nunca pulse el boton. El panel siempre la muestra.
  */
 
+import { enlaceAbsoluto } from "./enlace";
 import { formatHora } from "./format";
 
 /** Numero del spa con indicativo de pais y sin signos: 573001234567. */
@@ -34,7 +35,11 @@ export function construirAvisoReserva(datos: {
     `Fecha: ${datos.fechaLarga}`,
     `Hora: ${formatHora(datos.startTime)} a ${formatHora(datos.endTime)}`,
     `Servicios: ${datos.servicios.join(", ")}`,
-    `Codigo: ${datos.publicToken.slice(0, 8)}`,
+    "",
+    // El enlace completo, no un trozo del codigo: asi la clienta conserva en su
+    // propia conversacion la forma de consultar o cancelar la cita, aunque
+    // cambie de telefono o borre los datos del navegador.
+    `Mi cita: ${enlaceAbsoluto(`/reserva/${datos.publicToken}`)}`,
   ];
 
   // encodeURIComponent respeta los saltos de linea; WhatsApp los interpreta.

@@ -8,8 +8,12 @@ import { useState } from "react";
 import type { PublicBookingResult } from "@spa/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { formatLongDate } from "@/shared/lib/date";
+import { enlaceAbsoluto } from "@/shared/lib/enlace";
 import { formatDuration, formatRangoHoras } from "@/shared/lib/format";
+import { copiarAlPortapapeles } from "@/shared/lib/portapapeles";
+import { guardarUltimaReserva } from "@/shared/lib/ultima-reserva";
 import { construirAvisoReserva, hayWhatsappConfigurado } from "@/shared/lib/whatsapp";
 
 export function BookingConfirmationDialog({
@@ -20,6 +24,7 @@ export function BookingConfirmationDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const reducedMotion = useReducedMotion();
+  const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
   /** Cierto cuando ya pulso el boton de WhatsApp: cambia el dialogo de estado. */
   const [avisado, setAvisado] = useState(false);
@@ -32,6 +37,7 @@ export function BookingConfirmationDialog({
    */
   const token = booking?.publicToken ?? null;
   const [tokenVisto, setTokenVisto] = useState(token);
+  const [tokenGuardado, setTokenGuardado] = useState<string | null>(null);
   if (token !== tokenVisto) {
     setTokenVisto(token);
     setAvisado(false);
@@ -46,18 +52,36 @@ export function BookingConfirmationDialog({
    */
   const rutaReserva = booking ? `/reserva/${booking.publicToken}` : "";
 
+  /*
+   * Se guarda al mostrar la confirmacion, no al copiar: la clienta que cierra
+   * el dialogo sin tocar nada es justo la que despues no sabe donde mirar.
+   */
+  if (booking && token !== null && token !== tokenGuardado) {
+    setTokenGuardado(token);
+    guardarUltimaReserva({ token: booking.publicToken, fecha: booking.scheduledDate.slice(0, 10) });
+  }
+
   async function copiarEnlace() {
     if (!booking) return;
-    const absoluto =
-      typeof window === "undefined" ? rutaReserva : `${window.location.origin}${rutaReserva}`;
-    try {
-      await navigator.clipboard.writeText(absoluto);
+    const copiado = await copiarAlPortapapeles(enlaceAbsoluto(rutaReserva));
+
+    if (copiado) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Sin permiso de portapapeles queda el boton "Abrir mi cita", que no
-      // depende de copiar nada.
+      showToast({ title: "Enlace copiado", description: "Guárdalo para consultar o cancelar tu cita." });
+      return;
     }
+
+    /*
+     * Antes el fallo se tragaba en silencio y el boton no reaccionaba. Si no se
+     * pudo copiar hay que decirlo y dejar una salida: "Abrir mi cita" no
+     * depende del portapapeles.
+     */
+    showToast({
+      title: "No pudimos copiar el enlace",
+      description: "Abre tu cita con el botón de al lado y guarda la dirección desde el navegador.",
+      variant: "error",
+    });
   }
 
   return (
