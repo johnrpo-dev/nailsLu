@@ -20,12 +20,15 @@ ExecStart=/usr/bin/node dist/src/main.js
 Restart=always
 RestartSec=5
 
-# La base es un archivo: el servicio solo puede escribir donde vive.
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/srv/nailslu/apps/api/prisma /srv/nailslu/apps/api/backups
+# `ProtectSystem=strict` deja el disco en solo lectura salvo lo que se liste
+# aqui. Hacen falta tres sitios: la base, las fotos de los servicios que sube
+# la duena y la carpeta de copias. Sin `uploads` el panel da error al subir una
+# foto, y no de forma evidente: falla al escribir, no al validar.
+ReadWritePaths=/srv/nailslu/apps/api/prisma /srv/nailslu/apps/api/uploads /srv/nailslu/backups
 
 [Install]
 WantedBy=multi-user.target

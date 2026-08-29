@@ -18,6 +18,9 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
+# Next escribe su cache en `.next/cache` mientras sirve. Con el disco en solo
+# lectura arranca igual, pero llena el log de errores en cada peticion.
+ReadWritePaths=/srv/nailslu/apps/web/.next
 
 [Install]
 WantedBy=multi-user.target

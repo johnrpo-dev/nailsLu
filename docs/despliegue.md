@@ -1,112 +1,311 @@
-# Despliegue
+# Despliegue paso a paso
 
-Guia para publicar NAILS LU SPA en un VPS con Ubuntu. Los archivos de la
-carpeta `deploy/` se copian tal cual al servidor cambiando el dominio.
+Guía para publicar NAILS LU SPA desde cero, sin haberlo hecho antes. Cada paso
+dice qué se espera ver; si ves otra cosa, para y revisa antes de seguir.
 
-## Que hace falta
+**Tiempo aproximado:** entre una y dos horas, más lo que tarde el DNS en
+propagarse (de minutos a unas horas).
 
-- Un VPS con Ubuntu 22.04 o 24.04, acceso SSH con sudo y **disco persistente**
-  (la base es un archivo: si el disco se borra al reiniciar, se pierden las
-  reservas).
-- Node.js 20 o superior.
-- Un dominio con un registro A apuntando a la IP del servidor.
-- Puertos 80 y 443 abiertos.
+---
 
-No hace falta servidor de base de datos: SQLite vive dentro del proyecto.
+## Itinerario
 
-## 1. Preparar el servidor
+1. Comprar el dominio en Spaceship
+2. Contratar el VPS
+3. Entrar por SSH y asegurar el servidor
+4. Instalar Node y Caddy
+5. Apuntar el dominio a la IP
+6. Traer el código
+7. Configurar las variables de entorno
+8. Crear la base de datos y compilar
+9. Levantar los servicios y el HTTPS
+10. Comprobar que todo responde
+11. Entregarle el panel a Yeri
+
+---
+
+## 1. Comprar el dominio en Spaceship
+
+Elige el dominio y págalo. Nada más por ahora: la configuración del DNS es el
+paso 5, cuando ya tengas la IP del servidor.
+
+Un `.com` cuesta del orden de 10–15 USD al año.
+
+**Deja activada la privacidad del WHOIS** (Spaceship la incluye gratis). Sin
+ella, el nombre, la dirección y el teléfono del titular quedan en una base
+pública que rastrean los spammers.
+
+---
+
+## 2. Contratar el VPS
+
+El dominio y el servidor son cosas distintas: uno es el nombre, el otro es la
+máquina. Spaceship vende hosting, pero para esto hace falta un **VPS** con
+acceso root, no un hosting compartido.
+
+Opciones habituales, todas equivalentes para este proyecto:
+
+| Proveedor | Plan mínimo suficiente | Precio aprox. |
+| --- | --- | --- |
+| Hetzner | CX22 · 2 vCPU · 4 GB | ~4 €/mes |
+| DigitalOcean | Basic · 1 vCPU · 2 GB | ~12 USD/mes |
+| Vultr | Regular · 1 vCPU · 2 GB | ~10 USD/mes |
+
+Al crearlo:
+
+- **Sistema:** Ubuntu 24.04 LTS.
+- **Disco:** cualquiera sirve, pero tiene que ser **persistente**. La base de
+  datos es un archivo dentro del servidor; si el disco se borra al reiniciar, se
+  pierden todas las reservas.
+- **Ubicación:** la más cercana a Colombia que ofrezcan (Miami, Nueva York o São
+  Paulo). Más cerca es más rápido para las clientas.
+- **Clave SSH:** si te la ofrece, súbela. Es más seguro que una contraseña.
+
+Al terminar tendrás una **IP pública**, algo como `203.0.113.45`. Apúntala.
+
+> 1 GB de RAM se queda corto: compilar Next.js necesita más y el proceso muere a
+> mitad. Con 2 GB va sobrado.
+
+---
+
+## 3. Entrar por SSH y asegurar el servidor
+
+Desde tu equipo:
+
+```bash
+ssh root@TU_IP
+```
+
+Actualiza el sistema:
+
+```bash
+apt update && apt upgrade -y
+```
+
+Crea un usuario para ti, con sudo, y deja de usar root a diario:
+
+```bash
+adduser john
+usermod -aG sudo john
+```
+
+Copia tu clave SSH al usuario nuevo (desde **tu equipo**, en otra terminal):
+
+```bash
+ssh-copy-id john@TU_IP
+```
+
+Comprueba que entras como `john` **antes** de cerrar la sesión de root. Si te
+equivocas aquí, te quedas fuera del servidor.
+
+Activa el cortafuegos:
+
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw enable
+```
+
+**Solo esos tres puertos.** El 3000 y el 3001 son internos: Caddy habla con
+ellos desde dentro. Si los abres, cualquiera puede saltarse el HTTPS.
+
+---
+
+## 4. Instalar Node y Caddy
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs git
+
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update && sudo apt install -y caddy
+```
+
+Comprueba:
+
+```bash
+node --version    # v22.x
+caddy version
+```
+
+---
+
+## 5. Apuntar el dominio a la IP
+
+En Spaceship: **Domains → tu dominio → Advanced DNS**.
+
+Borra los registros de aparcamiento que trae por defecto y crea dos:
+
+| Tipo | Host | Valor | TTL |
+| --- | --- | --- | --- |
+| A | `@` | `TU_IP` | Automático |
+| A | `www` | `TU_IP` | Automático |
+
+Espera y comprueba desde tu equipo:
+
+```bash
+nslookup tudominio.com
+```
+
+Cuando devuelva tu IP, sigue. **No continúes al paso 9 antes de esto**: Caddy
+pide el certificado HTTPS validando el dominio, y si aún no apunta al servidor,
+falla y queda esperando.
+
+---
+
+## 6. Traer el código
 
 ```bash
 sudo adduser --system --group --home /srv/nailslu nailslu
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs caddy
-```
-
-## 2. Traer el codigo
-
-```bash
 sudo -u nailslu git clone https://github.com/johnrpo-dev/nailsLu.git /srv/nailslu
 cd /srv/nailslu
 sudo -u nailslu npm ci
 ```
 
-## 3. Configurar el entorno
+`npm ci` instala también las herramientas de compilación; hacen falta para el
+paso 8.
+
+Crea las carpetas donde el servicio va a escribir:
 
 ```bash
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env.local
+sudo -u nailslu mkdir -p /srv/nailslu/apps/api/uploads /srv/nailslu/backups
 ```
 
-Generar un secreto real (uno distinto para cada variable):
+---
+
+## 7. Configurar las variables de entorno
+
+```bash
+cd /srv/nailslu
+sudo -u nailslu cp apps/api/.env.example apps/api/.env
+sudo -u nailslu cp apps/web/.env.example apps/web/.env.local
+```
+
+Genera el secreto de sesión:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
-En `apps/api/.env`:
+Edita `apps/api/.env` (`sudo -u nailslu nano apps/api/.env`):
 
-- `JWT_ACCESS_SECRET`: el valor generado, y distinto del que uses en local.
-  **Dejar el de ejemplo permitiria a cualquiera fabricarse un token y entrar al
-  panel sin contrasena**, porque ese valor esta publicado en el repositorio.
-- `WEB_ORIGIN="https://nailslu.com,https://www.nailslu.com"`
-- `TRUST_PROXY="1"` porque Caddy va delante.
-- `DATABASE_URL="file:./prisma/produccion.db"`
+```
+DATABASE_URL="file:./prisma/produccion.db"
+JWT_ACCESS_SECRET="EL_VALOR_QUE_ACABAS_DE_GENERAR"
+WEB_ORIGIN="https://tudominio.com,https://www.tudominio.com"
+TRUST_PROXY="1"
+UPLOADS_DIR="/srv/nailslu/apps/api/uploads"
+BACKUP_DIR="/srv/nailslu/backups"
+```
 
-En `apps/web/.env.local`:
+Sobre cada uno:
 
-- `NEXT_PUBLIC_API_URL="https://nailslu.com/api"`
-- `NEXT_PUBLIC_SITE_URL="https://nailslu.com"`
-- `NEXT_PUBLIC_WHATSAPP_NUMBER` con el numero al que llegan los avisos, con
-  indicativo y sin signos.
+- **`JWT_ACCESS_SECRET`** firma las sesiones del panel. Quien lo conozca puede
+  entrar sin contraseña. Tiene que ser distinto del que uses en local, y el API
+  **se niega a arrancar** si falta, es corto o conserva el de ejemplo.
+- **`WEB_ORIGIN`** también es obligatorio: sin él tampoco arranca.
+- **`TRUST_PROXY=1`** porque Caddy va delante. Sin esto el límite de peticiones
+  ve a todas las clientas como una sola IP y se bloquean entre sí.
+- **`SALON_TIMEZONE`** no hace falta tocarlo: por defecto es `America/Bogota`, y
+  es lo que decide qué horas ya pasaron.
 
-**Este numero se cambia a mano, cuando se decida.** Mientras se hacen pruebas,
-produccion corre con `573003024035`, que es de pruebas y no el de Yeri: asi se
-puede reservar contra el sitio real sin llenarle el WhatsApp de citas falsas.
+Edita `apps/web/.env.local`:
 
-El numero de Yeri, para cuando toque hacer el cambio, es `573045442496`. Se
-cambia esta variable y se vuelve a compilar la web; no hay nada mas que tocar.
+```
+NEXT_PUBLIC_API_URL="https://tudominio.com/api"
+NEXT_PUBLIC_SITE_URL="https://tudominio.com"
+NEXT_PUBLIC_WHATSAPP_NUMBER="573003024035"
+```
 
-El sitio no compila si la variable falta o tiene menos de 10 digitos, pero
-ningun control puede saber a quien pertenece un numero valido. El cambio es
-deliberado, no automatico.
+**El número de WhatsApp se decide a mano.** Mientras se hacen pruebas se queda
+el de pruebas (`573003024035`) para no llenarle el WhatsApp a Yeri de citas
+falsas. El suyo es `573045442496`. Cuando toque cambiarlo: editar esta variable
+y **volver a compilar la web** — las variables `NEXT_PUBLIC_` se incrustan al
+compilar, no basta con reiniciar.
 
-## 4. Base de datos y compilacion
+---
+
+## 8. Crear la base de datos y compilar
 
 ```bash
-sudo -u nailslu npm run db:deploy   # crea el esquema. NO uses db:migrate aqui
-sudo -u nailslu npm run db:seed     # solo la primera vez: crea la cuenta admin
+cd /srv/nailslu
+sudo -u nailslu npm run db:deploy
+sudo -u nailslu npm run db:seed
 sudo -u nailslu npm run build
 ```
 
-Tras el seed, **entrar al panel y cambiar la contrasena** en "Tu cuenta". La del
-seed (`Admin12345!`) esta publicada en el repositorio. Mientras siga en uso, el
-panel muestra un aviso en todas las pantallas.
+- `db:deploy` crea las tablas. **No uses `db:migrate` en el servidor**: eso es
+  para desarrollo y puede pedir borrar datos.
+- `db:seed` crea la cuenta del panel y el catálogo inicial. Solo la primera vez;
+  si se vuelve a ejecutar no pisa nada de lo que ya haya.
+- `build` compila web y API. Tarda unos minutos.
 
-## 5. Servicios y servidor web
+El seed imprime la contraseña **una sola vez**:
+
+```
+  Cuenta creada
+  Correo:     admin@spa.local
+  Contrasena: Ow6KoZV6gb-f7YAU
+```
+
+**Anótala en ese momento.** No se vuelve a mostrar y no está guardada en ningún
+sitio en texto plano. Si se pierde, hay que borrar la cuenta y volver a sembrar.
+
+---
+
+## 9. Levantar los servicios y el HTTPS
 
 ```bash
 sudo cp deploy/nailslu-*.service deploy/nailslu-*.timer /etc/systemd/system/
-sudo cp deploy/Caddyfile /etc/caddy/Caddyfile   # cambiar el dominio primero
+sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+sudo nano /etc/caddy/Caddyfile     # cambiar nailslu.com por tu dominio
 sudo systemctl daemon-reload
 sudo systemctl enable --now nailslu-api nailslu-web nailslu-backup.timer
 sudo systemctl reload caddy
 ```
 
-Caddy pide el certificado HTTPS solo la primera vez que alguien entra.
+Caddy pide y renueva el certificado HTTPS solo. La primera visita puede tardar
+unos segundos de más mientras lo consigue.
 
-## 6. Comprobar
+---
+
+## 10. Comprobar que todo responde
 
 ```bash
-systemctl status nailslu-api nailslu-web
-curl -s https://nailslu.com/api/public/services | head -c 200
-systemctl list-timers nailslu-backup
+systemctl status nailslu-api nailslu-web        # los dos en "active (running)"
+curl -s https://tudominio.com/api/public/services | head -c 200
+systemctl list-timers nailslu-backup            # la copia diaria programada
 ```
 
-## Actualizar
+Y desde el navegador, en el móvil y en el ordenador:
+
+1. Abre `https://tudominio.com` y comprueba el candado.
+2. Reserva una cita de prueba de principio a fin.
+3. Entra al panel en `/admin/login` y comprueba que la cita aparece.
+4. **Cancela la cita de prueba** para no dejarla en la agenda.
+
+---
+
+## 11. Entregarle el panel a Yeri
+
+1. Pásale la dirección `https://tudominio.com/admin/login` y las credenciales
+   **por un canal privado**, no por WhatsApp normal si puedes evitarlo.
+2. Que **cambie la contraseña** al entrar, en "Tu cuenta". El panel se lo avisa
+   hasta que lo haga.
+3. Que **revise las duraciones** del catálogo: son las que deciden qué horarios
+   se ofrecen.
+4. Pásale [guia-para-lu.md](guia-para-lu.md), que explica el panel sin jerga.
+
+---
+
+## Actualizar cuando haya cambios
 
 ```bash
 cd /srv/nailslu
-sudo -u nailslu npm run db:backup          # primero la copia
+sudo -u nailslu npm run db:backup -w @spa/api   # primero la copia
 sudo -u nailslu git pull
 sudo -u nailslu npm ci
 sudo -u nailslu npm run db:deploy
@@ -114,11 +313,14 @@ sudo -u nailslu npm run build
 sudo systemctl restart nailslu-api nailslu-web
 ```
 
+---
+
 ## Copias de seguridad
 
-El temporizador guarda una copia diaria en `/srv/nailslu/backups` y conserva las
-ultimas 14. Usa `VACUUM INTO`, que produce una copia consistente aunque la
-aplicacion este escribiendo; copiar el archivo con `cp` puede corromperla.
+El temporizador guarda una copia diaria a las 3:30 en `/srv/nailslu/backups` y
+conserva las últimas 14. Usa `VACUUM INTO`, que produce una copia consistente
+aunque la aplicación esté escribiendo; copiar el archivo con `cp` puede
+corromperla.
 
 Copia manual:
 
@@ -135,48 +337,54 @@ sudo systemctl start nailslu-api
 ```
 
 **Las copias viven en el mismo servidor.** Si el disco falla, se pierden con
-todo lo demas. Conviene llevarselas fuera periodicamente:
+todo lo demás. Llévatelas fuera de vez en cuando:
 
 ```bash
-scp usuario@servidor:/srv/nailslu/backups/nailslu-*.db ./copias-locales/
+scp john@TU_IP:/srv/nailslu/backups/nailslu-*.db ./copias-locales/
 ```
+
+---
 
 ## Si algo falla
 
-- **502 en el navegador**: el servicio esta caido.
-  `journalctl -u nailslu-api -n 50`
-- **El panel devuelve 401 al entrar**: `JWT_ACCESS_SECRET` cambio; las sesiones
-  abiertas dejan de valer y hay que entrar de nuevo.
-- **Las clientas se bloquean entre si al reservar**: falta `TRUST_PROXY=1`, asi
-  que el rate limiting las cuenta a todas como una sola IP.
-- **"no such table"**: falta `npm run db:deploy`, o `DATABASE_URL` apunta a otro
-  archivo. La ruta se resuelve desde `apps/api`.
+| Síntoma | Causa habitual |
+| --- | --- |
+| El API no arranca | Falta `JWT_ACCESS_SECRET` o `WEB_ORIGIN`. El propio error lo dice: `journalctl -u nailslu-api -n 50` |
+| 502 en el navegador | El servicio está caído. Mismo comando de arriba |
+| Caddy no consigue el certificado | El dominio todavía no apunta a la IP, o el puerto 80 está cerrado |
+| "no such table" | Falta `npm run db:deploy`, o `DATABASE_URL` apunta a otro archivo |
+| Las clientas se bloquean entre sí | Falta `TRUST_PROXY=1` |
+| El panel devuelve 401 al entrar | Cambió `JWT_ACCESS_SECRET`; hay que entrar de nuevo |
+| Error al subir una foto | La carpeta `uploads` no existe o no está en `ReadWritePaths` del servicio |
+| El build muere sin explicación | Falta memoria. Con 1 GB no alcanza |
+
+---
 
 ## Datos personales
 
-La app pide autorizacion de tratamiento (Ley 1581 de 2012) antes de guardar la
-reserva, y registra la evidencia con cada cita: fecha, hora y version de la
-politica aceptada. Sin eso no se puede demostrar que la clienta autorizo.
+La app pide autorización de tratamiento (Ley 1581 de 2012) antes de guardar la
+reserva y registra la evidencia con cada cita: fecha, hora y versión de la
+política aceptada. Sin eso no se puede demostrar que la clienta autorizó.
 
-**Antes de abrir al publico:**
+Los datos de la responsable ya están completos en
+`apps/web/src/shared/lib/privacidad.ts`. Lo que **falta antes de abrir al
+público**:
 
-1. Completar `RESPONSABLE` en `apps/web/src/shared/lib/privacidad.ts` con NIT o
-   cedula, direccion, correo y telefono reales. La ley exige identificar al
-   responsable y dar un canal para ejercer derechos.
-2. **Que un abogado revise `/privacidad`.** Es una plantilla, no un texto legal
-   validado.
-3. Consultar si aplica el registro ante la SIC (Registro Nacional de Bases de
-   Datos); depende del tipo y tamano del responsable.
+1. **Que un abogado revise `/privacidad`.** El texto describe con precisión lo
+   que la app hace, pero no está validado jurídicamente.
+2. Consultar si aplica el registro ante la SIC (Registro Nacional de Bases de
+   Datos); depende del tipo y tamaño del responsable.
 
-Al cambiar el texto de la politica hay que subir la version en dos sitios a la
+Al cambiar el texto de la política hay que subir la versión en dos sitios a la
 vez, porque deben coincidir:
 
-- `apps/api/src/common/privacy.ts` -> `POLITICA_DATOS_VERSION`
-- `apps/web/src/shared/lib/privacidad.ts` -> `POLITICA_VERSION`
+- `apps/api/src/common/privacy.ts` → `POLITICA_DATOS_VERSION`
+- `apps/web/src/shared/lib/privacidad.ts` → `POLITICA_VERSION`
 
-Las autorizaciones anteriores siguen siendo validas para la version que
+Las autorizaciones anteriores siguen siendo válidas para la versión que
 aceptaron, no para la nueva.
 
-El sitio **no usa cookies** ni analitica ni rastreadores. El `localStorage` solo
-guarda la preferencia de tema y la sesion del panel. Si algun dia se agrega
-analitica o pixel publicitario, hace falta revisar el aviso.
+El sitio **no usa cookies** ni analítica ni rastreadores. El `localStorage` solo
+guarda la preferencia de tema, la sesión del panel y el enlace a la última cita
+de la clienta. Si algún día se agrega analítica o píxel publicitario, hay que
+revisar el aviso.
