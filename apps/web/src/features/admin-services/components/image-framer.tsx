@@ -3,6 +3,7 @@
 import { ImageOff, Move, Trash2, Upload, ZoomIn, ZoomOut } from "lucide-react";
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { prepararFoto } from "@/shared/lib/preparar-foto";
 import { urlDeFoto } from "@/shared/lib/service-image";
 
 export type Encuadre = { imageFocalX: number; imageFocalY: number; imageScale: number };
@@ -173,13 +174,14 @@ export function ImageFramer({
 
       <div className="flex flex-wrap gap-2">
         <input
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/*"
           className="hidden"
-          onChange={(e) => {
+          onChange={async (e) => {
             const file = e.target.files?.[0];
-            if (file) onSubir(file);
-            // Se limpia para que volver a elegir el mismo archivo dispare el cambio.
+            // Se limpia antes de procesar para que volver a elegir el mismo
+            // archivo dispare el cambio.
             e.target.value = "";
+            if (file) onSubir(await prepararFoto(file));
           }}
           ref={archivoRef}
           type="file"

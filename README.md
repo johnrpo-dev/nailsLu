@@ -61,10 +61,16 @@ En `http://localhost:3000/admin`, con las credenciales del seed.
 - **Servicios**: crear, editar nombre, descripcion y duracion, y ocultar o
   mostrar en el sitio publico. Ocultar es borrado logico: conserva el historial.
 - **Fotos**: cada servicio puede llevar una foto, que se sube desde su ficha.
-  Al subirla se reprocesa a WebP con un lado maximo de 1200px, y se puede
-  reencuadrar arrastrando la imagen y ajustando el zoom sin volver a subirla:
-  se guardan el punto focal y la escala, no se toca el archivo. Las fotos viven
-  en `apps/api/uploads`, que debe estar en disco persistente.
+  Pensado para subir desde el celular: el navegador reduce la foto a 2000px
+  antes de enviarla, asi que una de 12 MB viaja como poco mas de un mega y la
+  subida no depende de la señal. El servidor la reprocesa a WebP con un lado
+  maximo de 1200px y acepta hasta 30 MB, incluidos HEIC y HEIF de iPhone, por si
+  el navegador no supo decodificarla.
+
+  La foto siempre llena la tarjeta; se reencuadra arrastrandola y con el zoom,
+  sin volver a subirla: se guardan el punto focal y la escala, no se toca el
+  archivo. Las fotos viven en `apps/api/uploads`, que debe estar en disco
+  persistente.
 - **Disponibilidad**: horario base semanal (que dias se abre y a que horas) y
   excepciones por fecha para cerrar un festivo o una tarde suelta, o para abrir
   un dia que normalmente no se atiende. Las excepciones mandan sobre el horario

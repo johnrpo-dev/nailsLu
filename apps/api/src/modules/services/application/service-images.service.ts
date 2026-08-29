@@ -8,8 +8,28 @@ import { PrismaService } from "../../../prisma/prisma.service";
 /** Carpeta donde viven las fotos. Fuera de `dist`, para sobrevivir a los builds. */
 export const CARPETA_SUBIDAS = path.resolve(process.env.UPLOADS_DIR ?? "./uploads");
 
-const TIPOS_ACEPTADOS = ["image/jpeg", "image/png", "image/webp"];
-const MAXIMO_BYTES = 8 * 1024 * 1024;
+/**
+ * Formatos que acepta el servidor.
+ *
+ * HEIC y HEIF entran porque es lo que dispara un iPhone por defecto. La web
+ * reduce la foto antes de subirla, pero si el navegador no supo decodificarla
+ * llega el original y sharp si sabe leerlo.
+ */
+const TIPOS_ACEPTADOS = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+  "image/avif",
+];
+
+/**
+ * Tope generoso a proposito: es una red de seguridad, no el camino normal. Una
+ * foto de celular sin reducir ronda los 5-25 MB y los telefonos de mas
+ * megapixeles pasan de ahi.
+ */
+const MAXIMO_BYTES = 30 * 1024 * 1024;
 
 @Injectable()
 export class ServiceImagesService {
@@ -34,7 +54,7 @@ export class ServiceImagesService {
       throw new BadRequestException("Solo se aceptan imágenes JPG, PNG o WebP");
     }
     if (archivo.size > MAXIMO_BYTES) {
-      throw new BadRequestException("La imagen no puede pesar más de 8 MB");
+      throw new BadRequestException("La imagen no puede pesar más de 30 MB");
     }
 
     let procesada: Buffer;

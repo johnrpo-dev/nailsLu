@@ -54,7 +54,7 @@ export class ServicesController {
    */
   @UseGuards(JwtAuthGuard)
   @Post("admin/services/:id/image")
-  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: 8 * 1024 * 1024 } }))
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: 30 * 1024 * 1024 } }))
   uploadImage(@Param("id") id: string, @UploadedFile() file?: Express.Multer.File) {
     if (!file) throw new BadRequestException("No llegó ninguna imagen");
     return this.imagenes.guardar(id, file);
