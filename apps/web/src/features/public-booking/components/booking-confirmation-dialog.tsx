@@ -20,7 +20,22 @@ export function BookingConfirmationDialog({
 }) {
   const reducedMotion = useReducedMotion();
   const [copied, setCopied] = useState(false);
+  /** Cierto cuando ya pulso el boton de WhatsApp: cambia el dialogo de estado. */
+  const [avisado, setAvisado] = useState(false);
   const open = Boolean(booking);
+
+  /*
+   * Reiniciar al llegar una reserva nueva. Se compara durante el render en vez
+   * de en un efecto: asi el dialogo nunca llega a pintarse un fotograma con el
+   * estado de la reserva anterior.
+   */
+  const token = booking?.publicToken ?? null;
+  const [tokenVisto, setTokenVisto] = useState(token);
+  if (token !== tokenVisto) {
+    setTokenVisto(token);
+    setAvisado(false);
+    setCopied(false);
+  }
 
   async function copyToken() {
     if (!booking) return;
@@ -55,7 +70,17 @@ export function BookingConfirmationDialog({
                 transition={reducedMotion ? { duration: 0 } : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <SuccessMark reducedMotion={Boolean(reducedMotion)} />
+                  {/*
+                    La `key` hace que React monte una marca nueva al pasar a
+                    avisado, asi el trazo se vuelve a dibujar y el cambio de
+                    estado se nota. Sin ella el SVG ya animado se quedaria
+                    quieto y el paso pasaria desapercibido.
+                  */}
+                  <SuccessMark
+                    celebrar={avisado}
+                    key={avisado ? "avisado" : "registrada"}
+                    reducedMotion={Boolean(reducedMotion)}
+                  />
                   <Dialog.Close asChild>
                     <Button aria-label="Cerrar confirmación" size="icon" type="button" variant="ghost">
                       <X aria-hidden="true" className="size-4" />
@@ -64,11 +89,20 @@ export function BookingConfirmationDialog({
                 </div>
 
                 <Dialog.Title className="mt-5 text-2xl font-black tracking-tight">
-                  Tu reserva quedó registrada
+                  {avisado ? "¡Listo! Ya nos avisaste" : "Tu reserva quedó registrada"}
                 </Dialog.Title>
                 <Dialog.Description className="mt-2 text-sm leading-7 text-[hsl(var(--muted))]">
-                  Te escribimos al {formatPhoneDisplay(booking.client.phone)} para confirmar el turno. Guarda tu código
-                  por si necesitas consultarla o cancelarla.
+                  {avisado ? (
+                    <>
+                      Te confirmamos por WhatsApp al {formatPhoneDisplay(booking.client.phone)} apenas veamos tu
+                      mensaje. Si no alcanzaste a enviarlo, puedes abrirlo de nuevo aquí abajo.
+                    </>
+                  ) : (
+                    <>
+                      Te escribimos al {formatPhoneDisplay(booking.client.phone)} para confirmar el turno. Guarda tu
+                      código por si necesitas consultarla o cancelarla.
+                    </>
+                  )}
                 </Dialog.Description>
 
                 <div className="mt-6 rounded-[1.5rem] bg-[hsl(var(--surface))] p-4">
@@ -125,7 +159,12 @@ export function BookingConfirmationDialog({
                 */}
                 {hayWhatsappConfigurado() ? (
                   <div className="mt-6 grid gap-2">
-                    <Button asChild className="w-full" size="lg">
+                    <Button
+                      asChild
+                      className="w-full"
+                      size="lg"
+                      variant={avisado ? "secondary" : "primary"}
+                    >
                       <a
                         href={construirAvisoReserva({
                           clientName: booking.client.fullName,
@@ -136,16 +175,32 @@ export function BookingConfirmationDialog({
                           servicios: booking.services.map((s) => s.serviceNameSnapshot),
                           publicToken: booking.publicToken,
                         })}
+                        /*
+                          No sabemos si llego a enviar el mensaje, solo que
+                          abrio WhatsApp. El dialogo cambia de estado con eso,
+                          y por eso el texto siguiente ofrece reabrirlo en vez
+                          de dar el envio por hecho.
+                        */
+                        onClick={() => setAvisado(true)}
                         rel="noreferrer"
                         target="_blank"
                       >
                         <MessageCircle aria-hidden="true" className="size-4" />
-                        Avisarnos por WhatsApp
+                        {avisado ? "Abrir WhatsApp otra vez" : "Avisarnos por WhatsApp"}
                       </a>
                     </Button>
-                    <p className="text-center text-xs leading-5 text-[hsl(var(--muted))]">
-                      El mensaje ya va escrito: solo tienes que enviarlo para que confirmemos tu turno.
-                    </p>
+
+                    {avisado ? (
+                      <Dialog.Close asChild>
+                        <Button className="w-full" size="lg" type="button">
+                          Cerrar
+                        </Button>
+                      </Dialog.Close>
+                    ) : (
+                      <p className="text-center text-xs leading-5 text-[hsl(var(--muted))]">
+                        El mensaje ya va escrito: solo tienes que enviarlo para que confirmemos tu turno.
+                      </p>
+                    )}
                   </div>
                 ) : (
                   /*
@@ -169,10 +224,25 @@ export function BookingConfirmationDialog({
   );
 }
 
-/** Circulo que se dibuja y check que se traza: el remate de la confirmacion. */
-function SuccessMark({ reducedMotion }: { reducedMotion: boolean }) {
+/**
+ * Circulo que se dibuja y check que se traza: el remate de la confirmacion.
+ *
+ * Con `celebrar` anade un anillo que se expande y se desvanece una sola vez,
+ * para marcar el paso a "ya avisaste". Es un gesto corto a proposito: la
+ * clienta viene de cambiar de aplicacion y lo que necesita es una senal clara,
+ * no una animacion que la retenga.
+ */
+function SuccessMark({ celebrar = false, reducedMotion }: { celebrar?: boolean; reducedMotion: boolean }) {
   return (
-    <span className="grid size-14 place-items-center rounded-full bg-[hsl(var(--accent)/0.14)]">
+    <span className="relative grid size-14 place-items-center rounded-full bg-[hsl(var(--accent)/0.14)]">
+      {celebrar && !reducedMotion ? (
+        <motion.span
+          animate={{ scale: 1.9, opacity: 0 }}
+          className="absolute inset-0 rounded-full border-2 border-[hsl(var(--accent))]"
+          initial={{ scale: 1, opacity: 0.55 }}
+          transition={{ duration: 0.85, ease: "easeOut" }}
+        />
+      ) : null}
       <svg aria-hidden="true" className="size-8" fill="none" viewBox="0 0 36 36">
         <motion.circle
           animate={{ pathLength: 1 }}
