@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ApiError, apiPost, setAuthTokenProvider } from "@/shared/api/client";
+import { ApiError, apiGet, apiPost, setAuthTokenProvider } from "@/shared/api/client";
 import { clearSession, readSession, readToken, writeSession, type AdminUser } from "../services/auth-storage";
 
 type SessionState = {
@@ -49,6 +49,32 @@ export function AdminSessionProvider({ children }: { children: ReactNode }) {
     setUser(sesion?.user ?? null);
     setUsingDefault(Boolean(sesion?.usingDefaultPassword));
     setReady(true);
+    if (!sesion) return;
+
+    /*
+     * La copia de localStorage se escribio al entrar y puede tener meses. Se
+     * pinta primero para que el panel no parpadee, y en paralelo se le pide al
+     * API la version vigente: asi un cambio en la cuenta se refleja sin esperar
+     * a que caduque la sesion.
+     *
+     * De paso valida el token al cargar. Si esta vencido, el cliente HTTP
+     * emite `api-unauthorized` y el efecto de abajo devuelve al login, en vez
+     * de descubrirlo en el primer clic.
+     */
+    const controller = new AbortController();
+    apiGet<AdminUser>("/auth/me", controller.signal)
+      .then((vigente) => {
+        if (controller.signal.aborted) return;
+        setUser(vigente);
+        const guardada = readSession();
+        if (guardada) writeSession({ ...guardada, user: vigente });
+      })
+      .catch(() => {
+        // Un 401 ya lo maneja el listener de abajo; si fue un fallo de red, se
+        // sigue con la copia guardada en lugar de echar a nadie del panel.
+      });
+
+    return () => controller.abort();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

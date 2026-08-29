@@ -21,7 +21,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get("me")
   me(@CurrentUser() user: AuthenticatedUser) {
-    return user;
+    return this.auth.perfil(user.sub);
   }
 
   // Mismo freno que el login: cambiar la contrasena exige la actual, asi que

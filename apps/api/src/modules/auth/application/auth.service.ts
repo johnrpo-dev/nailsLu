@@ -52,6 +52,28 @@ export class AuthService {
     };
   }
 
+  /**
+   * Datos vigentes de la cuenta, leidos de la base.
+   *
+   * El token guarda correo y rol tal como estaban al entrar, asi que servirlos
+   * de vuelta seria repetirle al panel lo que el mismo ya tiene. Consultando la
+   * base, cualquier cambio posterior (el nombre, el rol, una cuenta
+   * desactivada) surte efecto sin esperar a que caduquen las 12 horas.
+   */
+  async perfil(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, role: true, isActive: true },
+    });
+
+    // Cuenta borrada o desactivada con la sesion abierta: el 401 hace que el
+    // panel vuelva al login, en vez de dejarla dentro con un token todavia
+    // valido por firma.
+    if (!user?.isActive) throw new UnauthorizedException("La sesión ya no es válida");
+
+    return { id: user.id, email: user.email, name: user.name, role: user.role };
+  }
+
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user?.passwordHash) {
