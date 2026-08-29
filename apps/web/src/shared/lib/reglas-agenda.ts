@@ -8,6 +8,14 @@
  */
 export const MINUTOS_TRASLADO_DOMICILIO = 50;
 
+/** Resta minutos a una hora "HH:mm", sin bajar de las 00:00. */
+export function restarMinutos(hora: string, minutos: number) {
+  const [h, m] = hora.split(":").map(Number);
+  if (!Number.isInteger(h) || !Number.isInteger(m)) return hora;
+  const total = Math.max(0, h * 60 + m - minutos);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
 /**
  * Suma minutos a una hora "HH:mm".
  *

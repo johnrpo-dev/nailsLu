@@ -277,6 +277,60 @@ describe("traslado a domicilio", () => {
     expect(slots.at(-1)).toBe("18:00");
   });
 
+  it("el traslado de ida separa la cita anterior", async () => {
+    // Cita en el spa de 09:00 a 10:00. Un domicilio a las 10:30 tendria que
+    // salir sobre las 09:40, cuando todavia esta atendiendo.
+    const s = new AvailabilityService(
+      prismaFalso({
+        horarios: jornada,
+        reservas: [{ startTime: "09:00", endTime: "10:00", travelBufferMinutes: 0 }],
+      }),
+    );
+
+    const aDomicilio = await s.listSlots({ date: MARTES, durationMinutes: 60, serviceLocation: "DOMICILIO" });
+    expect(aDomicilio.slots).not.toContain("10:30");
+    expect(aDomicilio.slots).toContain("11:00");
+
+    // La misma cita en el spa si puede empezar a las 10:00, sin viaje de por medio.
+    const enSpa = await s.listSlots({ date: MARTES, durationMinutes: 60 });
+    expect(enSpa.slots).toContain("10:00");
+  });
+
+  it("el traslado de ida no recorta la primera cita del dia", async () => {
+    // A la primera se puede salir de casa directamente, asi que abrir a las
+    // 08:00 no impide un domicilio a esa misma hora.
+    const s = new AvailabilityService(prismaFalso({ horarios: jornada }));
+    const { slots } = await s.listSlots({
+      date: MARTES,
+      durationMinutes: 60,
+      serviceLocation: "DOMICILIO",
+    });
+
+    expect(slots[0]).toBe("08:00");
+  });
+
+  it("restar el traslado nunca produce una hora negativa", async () => {
+    // Con la jornada abierta desde medianoche, 00:00 menos 50 minutos se
+    // saldria del dia. Se acota en 00:00 en vez de generar "-1:10".
+    //
+    // Se usa el martes siguiente y no MARTES, que con el reloj fijado es hoy:
+    // ahi el filtro de franjas pasadas recortaria la madrugada y taparia justo
+    // lo que se quiere comprobar.
+    const s = new AvailabilityService(
+      prismaFalso({
+        horarios: [{ weekday: 2, startTime: "00:00", endTime: "23:30", isActive: true }],
+      }),
+    );
+    const { slots } = await s.listSlots({
+      date: "2026-09-15",
+      durationMinutes: 60,
+      serviceLocation: "DOMICILIO",
+    });
+
+    expect(slots[0]).toBe("00:00");
+    expect(slots.every((h) => /^\d{2}:\d{2}$/.test(h))).toBe(true);
+  });
+
   it("el traslado tambien cuenta contra un bloqueo de la agenda", async () => {
     // Bloqueo de 13:00 a 14:00: un domicilio de una hora a las 11:30 acabaria
     // ocupando hasta las 13:20 y se cruza con el.

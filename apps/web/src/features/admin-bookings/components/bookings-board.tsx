@@ -11,7 +11,7 @@ import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
 import { formatLongDate } from "@/shared/lib/date";
 import { formatDuration, formatHora, formatRangoHoras } from "@/shared/lib/format";
-import { sumarMinutos } from "@/shared/lib/reglas-agenda";
+import { restarMinutos, sumarMinutos } from "@/shared/lib/reglas-agenda";
 import {
   listAdminBookings,
   updateBookingStatus,
@@ -227,9 +227,10 @@ export function BookingsBoard() {
                             */}
                             {booking.travelBufferMinutes > 0 ? (
                               <p className="text-xs font-semibold text-[hsl(var(--muted))]">
-                                Agenda bloqueada hasta las{" "}
-                                {formatHora(sumarMinutos(booking.endTime, booking.travelBufferMinutes))} por el
-                                traslado ({formatDuration(booking.travelBufferMinutes)}).
+                                Agenda bloqueada de{" "}
+                                {formatHora(restarMinutos(booking.startTime, booking.travelBufferMinutes))} a{" "}
+                                {formatHora(sumarMinutos(booking.endTime, booking.travelBufferMinutes))}, con el
+                                traslado de ida y vuelta ({formatDuration(booking.travelBufferMinutes)} cada uno).
                               </p>
                             ) : null}
                             {booking.address ? (

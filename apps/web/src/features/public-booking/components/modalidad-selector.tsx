@@ -60,7 +60,7 @@ export function ModalidadSelector({
       <p aria-live="polite" className="mt-3 text-sm leading-6 text-[hsl(var(--muted))]">
         {value === "DOMICILIO" ? (
           <>
-            Vamos hasta donde estés. Reservamos {formatDuration(MINUTOS_TRASLADO_DOMICILIO)} extra
+            Vamos hasta donde estés. Reservamos {formatDuration(MINUTOS_TRASLADO_DOMICILIO)} antes y
             después de tu cita para el desplazamiento, así que verás menos horarios disponibles.
           </>
         ) : value === "SPA" ? (

@@ -11,7 +11,8 @@
  * domicilio hay que recoger, salir y volver, asi que el hueco es parte real de
  * la cita aunque no sea trabajo.
  *
- * Se aplica solo DESPUES del servicio, que es lo que se pidio. El
- * desplazamiento de ida no se descuenta: si algun dia hace falta, es aqui.
+ * Se aplica a los dos lados: el mismo margen para ir y para volver. Solo
+ * cuenta para separar citas entre si, nunca para recortar la jornada: a la
+ * primera cita del dia se puede salir de casa directamente.
  */
 export const MINUTOS_TRASLADO_DOMICILIO = 50;

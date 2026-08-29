@@ -16,9 +16,24 @@ type AvailabilityQuery = {
   serviceLocation?: string;
 };
 
-/** Minutos que una cita mantiene ocupados despues de terminar el servicio. */
+/** Minutos de traslado que arrastra una cita, a cada lado del servicio. */
 function trasladoDe(serviceLocation: string | undefined) {
   return serviceLocation === ServiceLocation.DOMICILIO ? MINUTOS_TRASLADO_DOMICILIO : 0;
+}
+
+/**
+ * Hueco que una cita ocupa de verdad en la agenda.
+ *
+ * A domicilio hay que ir y volver, asi que el traslado cuenta a los dos lados:
+ * para estar a las 16:00 en casa de la clienta hay que salir sobre las 15:10.
+ *
+ * El inicio se acota a las 00:00 para que restar no produzca horas negativas,
+ * que al formatearse darian cadenas sin sentido y romperian las comparaciones
+ * de texto con las que se ordena todo.
+ */
+export function huecoOcupado(startTime: string, endTime: string, traslado: number) {
+  const inicio = Math.max(0, minutesFromTime(startTime) - traslado);
+  return { inicio: timeFromMinutes(inicio), fin: addMinutes(endTime, traslado) };
 }
 
 type Ventana = { startTime: string; endTime: string };
@@ -106,23 +121,23 @@ export class AvailabilityService {
         const endTime = addMinutes(startTime, query.durationMinutes);
 
         /*
-         * Lo que la franja ocupa de verdad incluye el traslado, no solo el
-         * servicio. Se compara con el hueco ocupado de cada reserva existente,
-         * que a su vez arrastra el traslado con el que se acepto: por eso el
+         * Lo que la franja ocupa de verdad incluye el traslado de ida y vuelta,
+         * no solo el servicio. Se compara con el hueco de cada reserva
+         * existente, que arrastra el traslado con el que se acepto: por eso el
          * margen se guarda en la fila y no se recalcula aqui.
+         *
+         * El hueco solo se usa para detectar choques, nunca para decidir si la
+         * franja entra en la jornada. Asi el traslado de ida no recorta la
+         * primera cita del dia: a esa se puede salir de casa directamente.
          */
-        const finOcupado = addMinutes(endTime, trasladoDe(query.serviceLocation));
+        const hueco = huecoOcupado(startTime, endTime, trasladoDe(query.serviceLocation));
 
-        const chocaConReserva = bookings.some((booking) =>
-          rangesOverlap(
-            startTime,
-            finOcupado,
-            booking.startTime,
-            addMinutes(booking.endTime, booking.travelBufferMinutes),
-          ),
-        );
+        const chocaConReserva = bookings.some((booking) => {
+          const ocupado = huecoOcupado(booking.startTime, booking.endTime, booking.travelBufferMinutes);
+          return rangesOverlap(hueco.inicio, hueco.fin, ocupado.inicio, ocupado.fin);
+        });
         const chocaConBloqueo = bloqueados.some((block) =>
-          rangesOverlap(startTime, finOcupado, block.startTime, block.endTime),
+          rangesOverlap(hueco.inicio, hueco.fin, block.startTime, block.endTime),
         );
 
         if (!chocaConReserva && !chocaConBloqueo) {

@@ -12,7 +12,7 @@ import { MINUTOS_TRASLADO_DOMICILIO } from "../../../common/booking-rules";
 import { POLITICA_DATOS_VERSION, RETENCION_INTENTOS_DIAS } from "../../../common/privacy";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { addMinutes, rangesOverlap, todayIsoDate } from "../../availability/application/time.utils";
-import { AvailabilityService } from "../../availability/application/availability.service";
+import { AvailabilityService, huecoOcupado } from "../../availability/application/availability.service";
 import { ServicesService } from "../../services/application/services.service";
 import { CreatePublicBookingDto } from "../presentation/dto/create-public-booking.dto";
 
@@ -192,16 +192,12 @@ export class BookingsService {
          * servicio, dos citas a domicilio podrian quedar pegadas pese a que la
          * grilla nunca las ofrecio juntas.
          */
-        const finOcupadoNuevo = addMinutes(endTime, trasladoNuevo);
+        const huecoNuevo = huecoOcupado(dto.startTime, endTime, trasladoNuevo);
 
-        const hasCollision = activeBookings.some((booking) =>
-          rangesOverlap(
-            dto.startTime,
-            finOcupadoNuevo,
-            booking.startTime,
-            addMinutes(booking.endTime, booking.travelBufferMinutes),
-          ),
-        );
+        const hasCollision = activeBookings.some((booking) => {
+          const ocupado = huecoOcupado(booking.startTime, booking.endTime, booking.travelBufferMinutes);
+          return rangesOverlap(huecoNuevo.inicio, huecoNuevo.fin, ocupado.inicio, ocupado.fin);
+        });
         if (hasCollision) {
           throw new ConflictException("Selected slot is no longer available");
         }
