@@ -38,6 +38,20 @@ verificarWhatsapp();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@spa/shared", "@spa/ui"],
+
+  /*
+   * Quien abra el sitio desde el celular llega por la IP de la red, no por
+   * localhost. El servidor de desarrollo bloquea con 403 los bundles de
+   * `_next/` pedidos desde otro host, asi que la pagina se pintaba pero no
+   * hidrataba: se veia la cabecera y nada mas.
+   *
+   * Se listan los rangos privados enteros en vez de una IP concreta porque el
+   * router las reparte por DHCP y cambian solas al reconectar. El comparador
+   * de Next parte por puntos y acepta un comodin por segmento.
+   *
+   * Solo afecta a `next dev`. En produccion esta comprobacion no existe.
+   */
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.*.*.*"],
 };
 
 export default nextConfig;
