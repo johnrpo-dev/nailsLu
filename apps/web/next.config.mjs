@@ -1,3 +1,6 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 /**
  * El aviso por WhatsApp es el unico camino para confirmar una cita, asi que el
  * numero del spa es obligatorio: sin el, la clienta reserva y nadie se entera
@@ -35,9 +38,22 @@ function verificarWhatsapp() {
 
 verificarWhatsapp();
 
+/*
+ * Raiz del monorepo, donde vive el `node_modules` compartido.
+ *
+ * Turbopack la deduce buscando el lockfile hacia arriba, pero se niega a usar
+ * un directorio que sea el home de un usuario. En el servidor la aplicacion
+ * corre como `nailslu` con home en `/srv/nailslu`, que es justo la raiz del
+ * proyecto: sin esto el build falla con "Could not find the Next.js package".
+ *
+ * Indicarla a mano quita la adivinanza y funciona igual en local.
+ */
+const raizMonorepo = path.resolve(fileURLToPath(new URL("../..", import.meta.url)));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@spa/shared", "@spa/ui"],
+  turbopack: { root: raizMonorepo },
 
   /*
    * Quien abra el sitio desde el celular llega por la IP de la red, no por
