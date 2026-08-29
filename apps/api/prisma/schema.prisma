@@ -125,6 +125,11 @@ model Booking {
   /// Donde se presta el servicio: SPA o DOMICILIO. Ver ServiceLocation.
   serviceLocation      String          @default("SPA") @map("service_location")
 
+  /// Minutos que quedan bloqueados DESPUES de `endTime` para el traslado.
+  /// Se guardan en la reserva y no se calculan al vuelo: si manana cambia la
+  /// regla, las citas ya agendadas conservan el hueco con el que se aceptaron.
+  travelBufferMinutes  Int             @default(0) @map("travel_buffer_minutes")
+
   /// Solo cuando es a domicilio. Se guarda con la cita, no con la clienta:
   /// una misma persona puede pedirlo en su casa una vez y en otra direccion
   /// la siguiente, y al borrar la cita desaparece con ella.

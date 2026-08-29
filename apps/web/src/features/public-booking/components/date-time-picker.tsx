@@ -20,12 +20,15 @@ const SLOT_COLUMNS = 3;
 
 export function DateTimePicker({
   durationMinutes,
+  serviceLocation,
   date,
   time,
   onDateChange,
   onTimeChange,
 }: {
   durationMinutes: number;
+  /** Vacio hasta que la clienta elige: sin modalidad no se piden franjas. */
+  serviceLocation: "" | "SPA" | "DOMICILIO";
   date: string;
   time: string;
   onDateChange: (date: string) => void;
@@ -51,7 +54,7 @@ export function DateTimePicker({
   }, [time]);
 
   useEffect(() => {
-    if (!durationMinutes) {
+    if (!durationMinutes || !serviceLocation) {
       setSlots([]);
       setStatus("idle");
       onTimeChangeRef.current("");
@@ -61,7 +64,7 @@ export function DateTimePicker({
     const controller = new AbortController();
     setStatus("loading");
 
-    getAvailability(date, durationMinutes, controller.signal)
+    getAvailability(date, durationMinutes, serviceLocation, controller.signal)
       .then((response) => {
         if (controller.signal.aborted) return;
         setSlots(response.slots);
@@ -86,7 +89,7 @@ export function DateTimePicker({
     // Cancela la peticion anterior: al cambiar de dia rapido, una respuesta
     // lenta ya no puede pisar la grilla del dia actual.
     return () => controller.abort();
-  }, [date, durationMinutes, reloadToken]);
+  }, [date, durationMinutes, serviceLocation, reloadToken]);
 
   const selectedDayIndex = days.findIndex((day) => day.iso === date);
   const dayFocus = useRovingFocus({ count: days.length, columns: DAY_COLUMNS, selectedIndex: selectedDayIndex });

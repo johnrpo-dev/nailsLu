@@ -10,7 +10,8 @@ import { useToast } from "@/components/ui/toast";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
 import { formatLongDate } from "@/shared/lib/date";
-import { formatDuration, formatRangoHoras } from "@/shared/lib/format";
+import { formatDuration, formatHora, formatRangoHoras } from "@/shared/lib/format";
+import { sumarMinutos } from "@/shared/lib/reglas-agenda";
 import {
   listAdminBookings,
   updateBookingStatus,
@@ -219,6 +220,18 @@ export function BookingsBoard() {
                             <p className="flex items-center gap-2 text-sm font-black">
                               <House aria-hidden="true" className="size-4 shrink-0" /> A domicilio
                             </p>
+                            {/*
+                              El traslado se muestra porque explica un hueco en
+                              la agenda que si no pareceria tiempo libre: la
+                              siguiente cita no empieza cuando termina esta.
+                            */}
+                            {booking.travelBufferMinutes > 0 ? (
+                              <p className="text-xs font-semibold text-[hsl(var(--muted))]">
+                                Agenda bloqueada hasta las{" "}
+                                {formatHora(sumarMinutos(booking.endTime, booking.travelBufferMinutes))} por el
+                                traslado ({formatDuration(booking.travelBufferMinutes)}).
+                              </p>
+                            ) : null}
                             {booking.address ? (
                               <a
                                 className="focus-ring rounded-xl text-sm leading-6 underline decoration-dotted underline-offset-4"

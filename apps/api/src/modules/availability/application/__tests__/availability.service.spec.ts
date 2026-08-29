@@ -11,12 +11,17 @@ import type { PrismaService } from "../../../../prisma/prisma.service";
  */
 function prismaFalso(datos: {
   horarios?: { weekday: number; startTime: string; endTime: string; isActive: boolean }[];
-  reservas?: { startTime: string; endTime: string }[];
+  reservas?: { startTime: string; endTime: string; travelBufferMinutes?: number }[];
   bloqueos?: { type: string; startTime: string; endTime: string }[];
 }) {
   return {
     businessHour: { findMany: async () => datos.horarios ?? [] },
-    booking: { findMany: async () => datos.reservas ?? [] },
+    // El margen de traslado por defecto es 0: sin el, `addMinutes` recibiria
+    // undefined y las comparaciones darian NaN, que no falla, solo deja de
+    // detectar choques.
+    booking: {
+      findMany: async () => (datos.reservas ?? []).map((r) => ({ travelBufferMinutes: 0, ...r })),
+    },
     availabilityBlock: { findMany: async () => datos.bloqueos ?? [] },
   } as unknown as PrismaService;
 }
@@ -203,5 +208,91 @@ describe("no se agenda en el pasado", () => {
 
     expect((await s.listSlots({ date: MARTES, durationMinutes: 60 })).slots).toEqual([]);
     vi.setSystemTime(new Date("2026-09-08T12:00:00.000Z"));
+  });
+});
+
+describe("traslado a domicilio", () => {
+  it("una cita a domicilio deja ocupados 50 minutos mas", async () => {
+    // Servicio de hora y media a las 10:00: termina a las 11:30 y con el
+    // traslado la agenda no se libera hasta las 12:20.
+    const s = new AvailabilityService(
+      prismaFalso({
+        horarios: jornada,
+        reservas: [{ startTime: "10:00", endTime: "11:30", travelBufferMinutes: 50 }],
+      }),
+    );
+    const { slots } = await s.listSlots({ date: MARTES, durationMinutes: 60 });
+
+    expect(slots).not.toContain("11:30");
+    expect(slots).not.toContain("12:00");
+    expect(slots).toContain("12:30");
+  });
+
+  it("una cita en el spa libera la agenda al terminar", async () => {
+    // El mismo horario sin traslado: a las 11:30 ya se puede empezar otra.
+    const s = new AvailabilityService(
+      prismaFalso({
+        horarios: jornada,
+        reservas: [{ startTime: "10:00", endTime: "11:30", travelBufferMinutes: 0 }],
+      }),
+    );
+    const { slots } = await s.listSlots({ date: MARTES, durationMinutes: 60 });
+
+    expect(slots).toContain("11:30");
+  });
+
+  it("pedir domicilio descarta franjas que si caben para el spa", async () => {
+    const conReserva = {
+      horarios: jornada,
+      reservas: [{ startTime: "12:00", endTime: "13:00", travelBufferMinutes: 0 }],
+    };
+
+    // Un servicio de una hora a las 11:00 termina a las 12:00 justo cuando
+    // empieza la siguiente: en el spa cabe.
+    const enSpa = await new AvailabilityService(prismaFalso(conReserva)).listSlots({
+      date: MARTES,
+      durationMinutes: 60,
+    });
+    expect(enSpa.slots).toContain("11:00");
+
+    // A domicilio ocuparia hasta las 12:50 y se solapa, asi que no se ofrece.
+    const aDomicilio = await new AvailabilityService(prismaFalso(conReserva)).listSlots({
+      date: MARTES,
+      durationMinutes: 60,
+      serviceLocation: "DOMICILIO",
+    });
+    expect(aDomicilio.slots).not.toContain("11:00");
+  });
+
+  it("el traslado no recorta la hora de la ultima cita", async () => {
+    // El cierre sigue siendo la hora en que se acepta la ultima clienta: que
+    // termine a las 20:20 con el viaje incluido no es motivo para no ofrecerla.
+    const s = new AvailabilityService(prismaFalso({ horarios: jornada }));
+    const { slots } = await s.listSlots({
+      date: MARTES,
+      durationMinutes: 90,
+      serviceLocation: "DOMICILIO",
+    });
+
+    expect(slots.at(-1)).toBe("18:00");
+  });
+
+  it("el traslado tambien cuenta contra un bloqueo de la agenda", async () => {
+    // Bloqueo de 13:00 a 14:00: un domicilio de una hora a las 11:30 acabaria
+    // ocupando hasta las 13:20 y se cruza con el.
+    const s = new AvailabilityService(
+      prismaFalso({
+        horarios: jornada,
+        bloqueos: [{ type: "BLOCKED", startTime: "13:00", endTime: "14:00" }],
+      }),
+    );
+    const { slots } = await s.listSlots({
+      date: MARTES,
+      durationMinutes: 60,
+      serviceLocation: "DOMICILIO",
+    });
+
+    expect(slots).not.toContain("11:30");
+    expect(slots).toContain("11:00");
   });
 });

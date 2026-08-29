@@ -2,36 +2,33 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
-import { AlertCircle, House, Info, MapPin, Phone, Send, Store, UserRound } from "lucide-react";
+import { AlertCircle, Info, MapPin, Phone, Send, UserRound } from "lucide-react";
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import type { ServiceLocation } from "@spa/shared";
 import { cn } from "@/shared/lib/cn";
 
-type FieldName = "clientName" | "phone" | "serviceLocation" | "address";
+type FieldName = "clientName" | "phone" | "address";
 
+/**
+ * Lo que este formulario aporta a la reserva.
+ *
+ * La modalidad no esta aqui: se elige antes, junto al calendario, porque
+ * cambia los horarios disponibles. El contenedor la anade al enviar.
+ */
 export type ContactFormValues = {
   clientName: string;
   phone: string;
   notes: string;
-  serviceLocation: ServiceLocation;
   /** Solo se envia a domicilio. */
   address?: string;
 };
 
-/**
- * Estado interno del formulario.
- *
- * `serviceLocation` empieza vacio a proposito, sin marcar el spa por defecto:
- * si viniera preseleccionado, quien quiere domicilio y no se fija acabaria con
- * una cita en el sitio equivocado. Un toque de mas vale menos que un viaje en
- * balde.
- */
+/** Estado interno del formulario. */
 type EstadoFormulario = {
   clientName: string;
   phone: string;
   notes: string;
-  serviceLocation: "" | ServiceLocation;
   address: string;
 };
 
@@ -39,14 +36,16 @@ const VACIO: EstadoFormulario = {
   clientName: "",
   phone: "",
   notes: "",
-  serviceLocation: "",
   address: "",
 };
 
 export function ContactExpressForm({
   missingRequirements,
   onSubmit,
+  serviceLocation,
 }: {
+  /** La elige el paso anterior, porque cambia los horarios disponibles. */
+  serviceLocation: "" | ServiceLocation;
   /** Pasos previos sin completar (servicio, horario). Bloquean el envio. */
   missingRequirements: string[];
   onSubmit: (input: ContactFormValues) => Promise<void>;
@@ -57,7 +56,6 @@ export function ContactExpressForm({
   const [touched, setTouched] = useState<Record<FieldName, boolean>>({
     clientName: false,
     phone: false,
-    serviceLocation: false,
     address: false,
   });
   const [submitting, setSubmitting] = useState(false);
@@ -65,7 +63,6 @@ export function ContactExpressForm({
   const phoneRef = useRef<HTMLInputElement>(null);
   const consentRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLInputElement>(null);
-  const locationRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 
   const digits = values.phone.replace(/\D/g, "");
@@ -83,9 +80,7 @@ export function ContactExpressForm({
     else if (digits.length < 7) next.phone = "El número está incompleto.";
     else if (digits.length > 10) next.phone = "Revisa el número, tiene dígitos de más.";
 
-    if (!values.serviceLocation) next.serviceLocation = "Elige dónde quieres el servicio.";
-
-    if (values.serviceLocation === "DOMICILIO") {
+    if (serviceLocation === "DOMICILIO") {
       const direccion = values.address.trim();
       if (!direccion) next.address = "Escribe la dirección donde vamos a atenderte.";
       else if (direccion.length < 10) next.address = "La dirección está incompleta.";
@@ -93,7 +88,7 @@ export function ContactExpressForm({
     }
 
     return next;
-  }, [values.clientName, digits, values.serviceLocation, values.address]);
+  }, [values.clientName, digits, serviceLocation, values.address]);
 
   const valid = Object.keys(errors).length === 0 && consent;
 
@@ -103,7 +98,7 @@ export function ContactExpressForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setTouched({ clientName: true, phone: true, serviceLocation: true, address: true });
+    setTouched({ clientName: true, phone: true, address: true });
     setConsentTouched(true);
 
     // Se revelan los errores y se lleva el foco al primer campo con problema
@@ -111,7 +106,6 @@ export function ContactExpressForm({
     if (!valid) {
       if (errors.clientName) nameRef.current?.focus();
       else if (errors.phone) phoneRef.current?.focus();
-      else if (errors.serviceLocation) locationRef.current?.focus();
       else if (errors.address) addressRef.current?.focus();
       else consentRef.current?.focus();
       return;
@@ -120,18 +114,17 @@ export function ContactExpressForm({
 
     setSubmitting(true);
     try {
-      const enDomicilio = values.serviceLocation === "DOMICILIO";
+      const enDomicilio = serviceLocation === "DOMICILIO";
       await onSubmit({
         clientName: values.clientName.trim(),
         phone: digits,
         notes: values.notes.trim(),
-        serviceLocation: values.serviceLocation as ServiceLocation,
         // Fuera del domicilio no se manda direccion: el API la rechaza y, sobre
         // todo, no hay motivo para enviar donde vive quien viene al local.
         ...(enDomicilio ? { address: values.address.trim() } : {}),
       });
       setValues(VACIO);
-      setTouched({ clientName: false, phone: false, serviceLocation: false, address: false });
+      setTouched({ clientName: false, phone: false, address: false });
       setConsent(false);
       setConsentTouched(false);
     } catch {
@@ -153,60 +146,7 @@ export function ContactExpressForm({
         <h2 className="mt-1 text-xl font-black tracking-tight">Confirma tus datos</h2>
       </div>
 
-      {/*
-        La modalidad va primero: cambia a que se compromete la clienta y, si es
-        a domicilio, hace aparecer un campo mas. Preguntarlo al final obligaria
-        a rehacer el formulario hacia arriba.
-      */}
-      <fieldset className="grid gap-2">
-        <legend className="mb-2 text-sm font-bold text-[hsl(var(--muted))]">
-          ¿Dónde quieres el servicio?
-        </legend>
-        <div
-          aria-describedby={touched.serviceLocation && errors.serviceLocation ? "location-error" : undefined}
-          aria-invalid={Boolean(touched.serviceLocation && errors.serviceLocation)}
-          className="grid grid-cols-2 gap-2"
-          ref={locationRef}
-          role="radiogroup"
-          tabIndex={-1}
-        >
-          {[
-            { valor: "SPA" as const, etiqueta: "En el spa", Icono: Store },
-            { valor: "DOMICILIO" as const, etiqueta: "A domicilio", Icono: House },
-          ].map(({ valor, etiqueta, Icono }) => {
-            const elegido = values.serviceLocation === valor;
-            return (
-              <button
-                aria-checked={elegido}
-                className={cn(
-                  "focus-ring flex min-h-12 items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-black transition",
-                  elegido
-                    ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.12)]"
-                    : "border-[hsl(var(--border))] bg-[hsl(var(--surface)/0.58)] hover:border-[hsl(var(--primary)/0.45)]",
-                )}
-                key={valor}
-                onClick={() => {
-                  setField("serviceLocation", valor);
-                  setTouched((current) => ({ ...current, serviceLocation: true }));
-                }}
-                role="radio"
-                type="button"
-              >
-                <Icono aria-hidden="true" className="size-4 shrink-0" />
-                {etiqueta}
-              </button>
-            );
-          })}
-        </div>
-        {touched.serviceLocation && errors.serviceLocation ? (
-          <p className="flex items-center gap-2 text-sm font-semibold text-[hsl(var(--danger))]" id="location-error">
-            <AlertCircle aria-hidden="true" className="size-4 shrink-0" />
-            {errors.serviceLocation}
-          </p>
-        ) : null}
-      </fieldset>
-
-      {values.serviceLocation === "DOMICILIO" ? (
+      {serviceLocation === "DOMICILIO" ? (
         <Field
           error={touched.address ? errors.address : undefined}
           hint="Barrio, calle y número. Lo usamos solo para llegar a tu cita."

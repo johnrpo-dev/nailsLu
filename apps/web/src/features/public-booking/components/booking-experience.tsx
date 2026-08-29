@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { CalendarCheck, ShieldCheck } from "lucide-react";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
-import type { PublicBookingResult } from "@spa/shared";
+import type { PublicBookingResult, ServiceLocation } from "@spa/shared";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useToast } from "@/components/ui/toast";
@@ -17,6 +17,7 @@ import { createPublicBooking } from "../services/booking-api";
 import { BookingConfirmationDialog } from "./booking-confirmation-dialog";
 import { ContactExpressForm, type ContactFormValues } from "./contact-express-form";
 import { DateTimePicker } from "./date-time-picker";
+import { ModalidadSelector } from "./modalidad-selector";
 import { MobileSummaryBar } from "./mobile-summary-bar";
 import { UltimaReservaAviso } from "./ultima-reserva-aviso";
 
@@ -24,6 +25,8 @@ export function BookingExperience({ brand }: { brand?: ReactNode }) {
   const { services, status, errorMessage, retry } = useServices();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [date, setDate] = useState(todayIsoDate);
+  /** Vacio a proposito: no hay opcion por defecto. */
+  const [serviceLocation, setServiceLocation] = useState<"" | ServiceLocation>("");
   const [time, setTime] = useState("");
   const [confirmed, setConfirmed] = useState<PublicBookingResult | null>(null);
   const { showToast } = useToast();
@@ -38,9 +41,10 @@ export function BookingExperience({ brand }: { brand?: ReactNode }) {
   const missingRequirements = useMemo(() => {
     const missing: string[] = [];
     if (!selectedServices.length) missing.push("elegir un servicio");
+    if (!serviceLocation) missing.push("elegir dónde te atendemos");
     if (!time) missing.push("elegir un horario");
     return missing;
-  }, [selectedServices.length, time]);
+  }, [selectedServices.length, serviceLocation, time]);
 
   const toggleService = useCallback((id: string) => {
     setSelectedIds((current) =>
@@ -54,6 +58,7 @@ export function BookingExperience({ brand }: { brand?: ReactNode }) {
         const booking = await createPublicBooking({
           ...input,
           serviceIds: selectedIds,
+          serviceLocation: serviceLocation as ServiceLocation,
           date,
           startTime: time,
           idempotencyKey: generarClaveIdempotencia(),
@@ -161,15 +166,35 @@ export function BookingExperience({ brand }: { brand?: ReactNode }) {
               </p>
             </div>
 
+            <ModalidadSelector
+              onChange={(valor) => {
+                setServiceLocation(valor);
+                /*
+                 * La hora elegida puede dejar de existir al cambiar a
+                 * domicilio, porque cada cita pasa a ocupar tambien el
+                 * traslado. Se limpia aqui en vez de esperar a que el API
+                 * responda, para que no quede seleccionada una franja que ya
+                 * no se ofrece.
+                 */
+                setTime("");
+              }}
+              value={serviceLocation}
+            />
+
             <DateTimePicker
               date={date}
               durationMinutes={durationMinutes}
               onDateChange={setDate}
               onTimeChange={setTime}
+              serviceLocation={serviceLocation}
               time={time}
             />
 
-            <ContactExpressForm missingRequirements={missingRequirements} onSubmit={submitContact} />
+            <ContactExpressForm
+              missingRequirements={missingRequirements}
+              onSubmit={submitContact}
+              serviceLocation={serviceLocation}
+            />
           </aside>
         </section>
       </main>

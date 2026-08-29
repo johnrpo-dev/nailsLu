@@ -7,8 +7,16 @@ export type AvailabilityResponse = {
   slots: string[];
 };
 
-export function getAvailability(date: string, durationMinutes: number, signal?: AbortSignal) {
+export function getAvailability(
+  date: string,
+  durationMinutes: number,
+  serviceLocation: string,
+  signal?: AbortSignal,
+) {
   const query = new URLSearchParams({ date, durationMinutes: String(durationMinutes) });
+  // A domicilio el API descuenta ademas el traslado, asi que devuelve menos
+  // franjas. Sin modalidad calcularia como si fuera en el spa.
+  if (serviceLocation) query.set("serviceLocation", serviceLocation);
   return apiGet<AvailabilityResponse>(`/public/availability?${query}`, signal);
 }
 

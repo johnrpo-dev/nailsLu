@@ -8,6 +8,7 @@ import {
   ServiceLocation,
   type BookingStatus as BookingStatusValue,
 } from "../../../common/enums";
+import { MINUTOS_TRASLADO_DOMICILIO } from "../../../common/booking-rules";
 import { POLITICA_DATOS_VERSION, RETENCION_INTENTOS_DIAS } from "../../../common/privacy";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { addMinutes, rangesOverlap, todayIsoDate } from "../../availability/application/time.utils";
@@ -30,6 +31,7 @@ const CAMPOS_RESERVA = {
   notes: true,
   serviceLocation: true,
   address: true,
+  travelBufferMinutes: true,
   source: true,
   createdAt: true,
   client: { select: { id: true, fullName: true, phone: true } },
@@ -157,12 +159,16 @@ export class BookingsService {
     const selectedServices = await this.services.findActiveByIds(dto.serviceIds);
     const totalDurationMinutes = selectedServices.reduce((sum, service) => sum + service.durationMinutes, 0);
     const endTime = addMinutes(dto.startTime, totalDurationMinutes);
+    // A domicilio la agenda queda ocupada mas alla del servicio, por el viaje.
+    const trasladoNuevo =
+      dto.serviceLocation === ServiceLocation.DOMICILIO ? MINUTOS_TRASLADO_DOMICILIO : 0;
 
     const isAvailable = await this.availability.assertSlotAvailable({
       date: dto.date,
       staffId: dto.staffId,
       durationMinutes: totalDurationMinutes,
       startTime: dto.startTime,
+      serviceLocation: dto.serviceLocation,
     });
     if (!isAvailable) {
       throw new ConflictException("Selected slot is no longer available");
@@ -179,8 +185,22 @@ export class BookingsService {
           },
         });
 
+        /*
+         * La comprobacion final, ya dentro de la transaccion, usa los mismos
+         * huecos ocupados que el calculo de franjas: el traslado de la cita
+         * nueva y el de cada cita existente. Si aqui se comparara solo el
+         * servicio, dos citas a domicilio podrian quedar pegadas pese a que la
+         * grilla nunca las ofrecio juntas.
+         */
+        const finOcupadoNuevo = addMinutes(endTime, trasladoNuevo);
+
         const hasCollision = activeBookings.some((booking) =>
-          rangesOverlap(dto.startTime, endTime, booking.startTime, booking.endTime),
+          rangesOverlap(
+            dto.startTime,
+            finOcupadoNuevo,
+            booking.startTime,
+            addMinutes(booking.endTime, booking.travelBufferMinutes),
+          ),
         );
         if (hasCollision) {
           throw new ConflictException("Selected slot is no longer available");
@@ -221,6 +241,7 @@ export class BookingsService {
             totalDurationMinutes,
             notes: dto.notes,
             serviceLocation: dto.serviceLocation,
+            travelBufferMinutes: trasladoNuevo,
             // En el spa nunca se guarda direccion, aunque llegue en la peticion.
             address: dto.serviceLocation === ServiceLocation.DOMICILIO ? dto.address?.trim() : null,
             // Evidencia de la autorizacion: cuando la dio y que version acepto.

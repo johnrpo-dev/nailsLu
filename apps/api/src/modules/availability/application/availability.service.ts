@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { ACTIVE_BOOKING_STATUSES, AvailabilityBlockType } from "../../../common/enums";
+import { MINUTOS_TRASLADO_DOMICILIO } from "../../../common/booking-rules";
+import { ACTIVE_BOOKING_STATUSES, AvailabilityBlockType, ServiceLocation } from "../../../common/enums";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { addMinutes, ahoraEnElSalon, minutesFromTime, rangesOverlap, timeFromMinutes } from "./time.utils";
 
@@ -7,7 +8,18 @@ type AvailabilityQuery = {
   date: string;
   durationMinutes: number;
   staffId?: string;
+  /**
+   * Modalidad de la cita que se quiere agendar. A domicilio la franja ocupa el
+   * servicio mas el traslado, asi que hay horas que dejan de caber aunque el
+   * servicio si cupiera.
+   */
+  serviceLocation?: string;
 };
+
+/** Minutos que una cita mantiene ocupados despues de terminar el servicio. */
+function trasladoDe(serviceLocation: string | undefined) {
+  return serviceLocation === ServiceLocation.DOMICILIO ? MINUTOS_TRASLADO_DOMICILIO : 0;
+}
 
 type Ventana = { startTime: string; endTime: string };
 
@@ -93,11 +105,24 @@ export class AvailabilityService {
         const startTime = timeFromMinutes(cursor);
         const endTime = addMinutes(startTime, query.durationMinutes);
 
+        /*
+         * Lo que la franja ocupa de verdad incluye el traslado, no solo el
+         * servicio. Se compara con el hueco ocupado de cada reserva existente,
+         * que a su vez arrastra el traslado con el que se acepto: por eso el
+         * margen se guarda en la fila y no se recalcula aqui.
+         */
+        const finOcupado = addMinutes(endTime, trasladoDe(query.serviceLocation));
+
         const chocaConReserva = bookings.some((booking) =>
-          rangesOverlap(startTime, endTime, booking.startTime, booking.endTime),
+          rangesOverlap(
+            startTime,
+            finOcupado,
+            booking.startTime,
+            addMinutes(booking.endTime, booking.travelBufferMinutes),
+          ),
         );
         const chocaConBloqueo = bloqueados.some((block) =>
-          rangesOverlap(startTime, endTime, block.startTime, block.endTime),
+          rangesOverlap(startTime, finOcupado, block.startTime, block.endTime),
         );
 
         if (!chocaConReserva && !chocaConBloqueo) {
