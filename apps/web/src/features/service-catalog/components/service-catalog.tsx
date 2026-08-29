@@ -102,7 +102,23 @@ export function ServiceCatalog({
                    * texto. Formato 4:5, el vertical de Instagram, que es donde
                    * la clienta tiene el ojo entrenado.
                    */
-                  <div className="relative -m-4 mb-4 aspect-[4/5] overflow-hidden rounded-t-[1.75rem] bg-[hsl(var(--surface))]">
+                  /*
+                   * La foto abre los detalles. Es lo que la clienta intenta
+                   * primero: en una galeria se toca la imagen, no un icono.
+                   *
+                   * Queda fuera del recorrido de Tab y del arbol de
+                   * accesibilidad a proposito. El boton de informacion de abajo
+                   * hace exactamente lo mismo y ya esta etiquetado, asi que
+                   * exponerla otra vez solo anadiria una parada duplicada por
+                   * tarjeta, once en total.
+                   */
+                  <button
+                    aria-hidden="true"
+                    className="relative -m-4 mb-4 block aspect-[4/5] w-[calc(100%+2rem)] overflow-hidden rounded-t-[1.75rem] bg-[hsl(var(--surface))]"
+                    onClick={() => setDetails(service)}
+                    tabIndex={-1}
+                    type="button"
+                  >
                     <img
                       alt={service.name}
                       className="size-full transition duration-500 group-hover:scale-[1.03]"
@@ -110,7 +126,7 @@ export function ServiceCatalog({
                       src={urlDeFoto(service.imageUrl) as string}
                       style={estiloDeEncuadre(service)}
                     />
-                  </div>
+                  </button>
                 ) : (
                   <div
                     aria-hidden="true"
