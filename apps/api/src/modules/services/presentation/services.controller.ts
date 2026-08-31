@@ -14,6 +14,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { JwtAuthGuard } from "../../../common/guards/jwt-auth.guard";
 import { ServiceImagesService } from "../application/service-images.service";
+import { UpdateImageFramingDto } from "./dto/update-image-framing.dto";
 import { ServicesService } from "../application/services.service";
 import { CreateServiceDto } from "./dto/create-service.dto";
 import { UpdateServiceDto } from "./dto/update-service.dto";
@@ -66,6 +67,16 @@ export class ServicesController {
   anadirFoto(@Param("id") id: string, @UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException("No llego ninguna imagen");
     return this.imagenes.anadirAlCarrusel(id, file);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch("admin/services/:id/images/:imageId")
+  reencuadrarFoto(
+    @Param("id") id: string,
+    @Param("imageId") imageId: string,
+    @Body() dto: UpdateImageFramingDto,
+  ) {
+    return this.imagenes.reencuadrar(id, imageId, dto);
   }
 
   @UseGuards(JwtAuthGuard)

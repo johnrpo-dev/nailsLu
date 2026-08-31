@@ -19,7 +19,10 @@ const CAMPOS_PUBLICOS = {
   imageFocalY: true,
   imageScale: true,
   /** Fotos del carrusel, en el orden en que se subieron. */
-  images: { select: { id: true, url: true }, orderBy: { sortOrder: "asc" } },
+  images: {
+    select: { id: true, url: true, imageFocalX: true, imageFocalY: true, imageScale: true },
+    orderBy: { sortOrder: "asc" },
+  },
 } as const;
 
 @Injectable()

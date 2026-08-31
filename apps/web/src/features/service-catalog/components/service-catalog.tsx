@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/shared/lib/cn";
-import { estiloDeEncuadre, urlDeFoto } from "@/shared/lib/service-image";
+import { fotosDeServicio } from "@/shared/lib/service-image";
 import { formatDuration } from "@/shared/lib/format";
 import type { ServicesStatus } from "../hooks/use-services";
+import { CarruselTarjeta } from "./carrusel-tarjeta";
 import { ServiceDetailsDialog } from "./service-details-dialog";
 
 export function ServiceCatalog({
@@ -96,45 +97,22 @@ export function ServiceCatalog({
                   reducedMotion ? { duration: 0 } : { delay: Math.min(index * 0.05, 0.3), duration: 0.34, ease: "easeOut" }
                 }
               >
-                {urlDeFoto(service.imageUrl) ? (
-                  /*
-                   * La foto es el producto en un spa de unas: manda sobre el
-                   * texto. Formato 4:5, el vertical de Instagram, que es donde
-                   * la clienta tiene el ojo entrenado.
-                   */
-                  /*
-                   * La foto abre los detalles. Es lo que la clienta intenta
-                   * primero: en una galeria se toca la imagen, no un icono.
-                   *
-                   * Queda fuera del recorrido de Tab y del arbol de
-                   * accesibilidad a proposito. El boton de informacion de abajo
-                   * hace exactamente lo mismo y ya esta etiquetado, asi que
-                   * exponerla otra vez solo anadiria una parada duplicada por
-                   * tarjeta, once en total.
-                   */
-                  <button
-                    aria-hidden="true"
-                    className="relative -m-4 mb-4 block aspect-[4/5] w-[calc(100%+2rem)] overflow-hidden rounded-t-[1.75rem] bg-[hsl(var(--surface))]"
-                    onClick={() => setDetails(service)}
-                    tabIndex={-1}
-                    type="button"
-                  >
-                    <img
-                      alt={service.name}
-                      className="size-full transition duration-500 group-hover:scale-[1.03]"
-                      loading="lazy"
-                      src={urlDeFoto(service.imageUrl) as string}
-                      style={estiloDeEncuadre(service)}
-                    />
-                  </button>
-                ) : (
+                {/*
+                  El carrusel va en la tarjeta y no solo en el detalle: si las
+                  fotos solo se vieran al abrir, la clienta no sabria que hay
+                  mas de una.
+                */}
+                <CarruselTarjeta onAbrir={() => setDetails(service)} service={service} />
+
+                {!fotosDeServicio(service).length ? (
                   <div
                     aria-hidden="true"
                     className="absolute right-4 top-4 text-[hsl(var(--primary)/0.16)] transition duration-300 group-hover:scale-110 group-hover:text-[hsl(var(--primary)/0.24)]"
                   >
                     <Gem className="size-12" />
                   </div>
-                )}
+                ) : null}
+
                 <div className="relative">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge>

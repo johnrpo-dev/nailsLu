@@ -33,3 +33,39 @@ export function estiloDeEncuadre(servicio: {
     transform: escala === 1 ? undefined : `scale(${escala})`,
   };
 }
+
+/**
+ * Fotos de un servicio, la portada primero.
+ *
+ * Devuelve solo las que existen: si la duena subio tres, son tres. Nunca hay
+ * huecos ni marcadores de posicion.
+ */
+export type FotoConEncuadre = { url: string; estilo: CSSProperties };
+
+export function fotosDeServicio(servicio: {
+  imageUrl?: string | null;
+  imageFocalX?: number;
+  imageFocalY?: number;
+  imageScale?: number;
+  images?: {
+    id: string;
+    url: string;
+    imageFocalX?: number;
+    imageFocalY?: number;
+    imageScale?: number;
+  }[];
+}): FotoConEncuadre[] {
+  const fotos: FotoConEncuadre[] = [];
+
+  const portada = urlDeFoto(servicio.imageUrl);
+  if (portada) fotos.push({ url: portada, estilo: estiloDeEncuadre(servicio) });
+
+  for (const extra of servicio.images ?? []) {
+    const url = urlDeFoto(extra.url);
+    // Cada una con el suyo: sin esto se recortarian por el centro y el diseno
+    // de las unas rara vez cae ahi.
+    if (url) fotos.push({ url, estilo: estiloDeEncuadre(extra) });
+  }
+
+  return fotos;
+}

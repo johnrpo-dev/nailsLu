@@ -83,8 +83,15 @@ Para cambiar la contraseña. Nada más por ahora.
 Cada servicio tiene una **portada** —la que sale en la tarjeta del catálogo, con
 su encuadre— y puedes añadirle **hasta 5 fotos más**, seis en total.
 
-Cuando una clienta toca la foto de un servicio, ve todas en un carrusel que pasa
-con el dedo. Si solo subiste dos, ve dos: no aparecen huecos vacíos.
+Las fotos se ven **desde el catálogo**, sin tener que abrir nada: se pasan con
+el dedo sobre la tarjeta, y unos puntitos debajo avisan de cuántas hay. Al abrir
+el detalle se ven más grandes.
+
+Si solo subiste dos, se ven dos: no aparecen huecos vacíos.
+
+**Cada foto lleva su propio encuadre.** Al editar el servicio, toca una de las
+fotos pequeñas y podrás moverla y acercarla igual que la portada, hasta que se
+vea la parte del diseño que quieres. Luego pulsa "Guardar encuadre".
 
 Piénsalo como una **muestra de tus mejores trabajos**, no como un álbum al día.
 Elige tres o cuatro por servicio, súbelas una vez, y refréscalas cuando te

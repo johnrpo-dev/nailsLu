@@ -88,6 +88,15 @@ export async function addGalleryImage(id: string, file: File, token: string | nu
   return (await respuesta.json()) as AdminService;
 }
 
+/** Reencuadra una foto del carrusel. Mismas tres propiedades que la portada. */
+export function updateGalleryFraming(
+  id: string,
+  imageId: string,
+  encuadre: { imageFocalX: number; imageFocalY: number; imageScale: number },
+) {
+  return apiPatch<AdminService>(`/admin/services/${id}/images/${imageId}`, encuadre);
+}
+
 export function removeGalleryImage(id: string, imageId: string) {
   return apiDelete<AdminService>(`/admin/services/${id}/images/${imageId}`);
 }

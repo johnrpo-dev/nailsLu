@@ -137,6 +137,36 @@ export class ServiceImagesService {
     return this.prisma.service.findUnique({ where: { id: serviceId }, select: CAMPOS_IMAGEN });
   }
 
+  /**
+   * Reencuadra una foto del carrusel.
+   *
+   * Las tres propiedades son las mismas que las de la portada: punto focal en
+   * cada eje y escala. No se vuelve a tocar el archivo, solo como se muestra.
+   */
+  async reencuadrar(
+    serviceId: string,
+    imageId: string,
+    encuadre: { imageFocalX: number; imageFocalY: number; imageScale: number },
+  ) {
+    const foto = await this.prisma.serviceImage.findFirst({
+      where: { id: imageId, serviceId },
+      select: { id: true },
+    });
+    if (!foto) throw new NotFoundException("La foto ya no existe");
+
+    await this.prisma.serviceImage.update({
+      where: { id: foto.id },
+      data: {
+        imageFocalX: encuadre.imageFocalX,
+        imageFocalY: encuadre.imageFocalY,
+        // Nunca por debajo de 100: encoger despegaria la foto del marco.
+        imageScale: Math.max(100, encuadre.imageScale),
+      },
+    });
+
+    return this.prisma.service.findUnique({ where: { id: serviceId }, select: CAMPOS_IMAGEN });
+  }
+
   /** Quita una foto del carrusel. La portada se quita con `quitar`. */
   async quitarDelCarrusel(serviceId: string, imageId: string) {
     const foto = await this.prisma.serviceImage.findFirst({
@@ -210,5 +240,8 @@ const CAMPOS_IMAGEN = {
   imageFocalY: true,
   imageScale: true,
   /** Fotos del carrusel, en el orden en que se subieron. */
-  images: { select: { id: true, url: true }, orderBy: { sortOrder: "asc" } },
+  images: {
+    select: { id: true, url: true, imageFocalX: true, imageFocalY: true, imageScale: true },
+    orderBy: { sortOrder: "asc" },
+  },
 } as const;

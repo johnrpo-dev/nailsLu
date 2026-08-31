@@ -5,22 +5,7 @@ import { useReducedMotion } from "framer-motion";
 import { useRef, useState } from "react";
 import type { ServiceSummary } from "@spa/shared";
 import { cn } from "@/shared/lib/cn";
-import { urlDeFoto } from "@/shared/lib/service-image";
-
-/**
- * Fotos de un servicio, portada primero.
- *
- * Devuelve solo las que existen: si la duena subio tres, se ven tres. No hay
- * huecos ni marcadores de posicion, que era el requisito.
- */
-function fotosDe(service: ServiceSummary) {
-  const portada = urlDeFoto(service.imageUrl);
-  const extras = (service.images ?? [])
-    .map((foto) => urlDeFoto(foto.url))
-    .filter((url): url is string => Boolean(url));
-
-  return portada ? [portada, ...extras] : extras;
-}
+import { fotosDeServicio } from "@/shared/lib/service-image";
 
 /**
  * Carrusel de fotos del servicio.
@@ -34,7 +19,7 @@ function fotosDe(service: ServiceSummary) {
  * asoma por el borde, que es lo que avisa de que hay mas sin tener que moverse.
  */
 export function GaleriaServicio({ service }: { service: ServiceSummary }) {
-  const fotos = fotosDe(service);
+  const fotos = fotosDeServicio(service);
   const [actual, setActual] = useState(0);
   const pistaRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
@@ -45,7 +30,7 @@ export function GaleriaServicio({ service }: { service: ServiceSummary }) {
   if (fotos.length === 1) {
     return (
       <div className="mt-5 aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-[hsl(var(--surface))]">
-        <img alt={service.name} className="size-full object-contain" src={fotos[0]} />
+        <img alt={service.name} className="size-full" src={fotos[0].url} style={fotos[0].estilo} />
       </div>
     );
   }
@@ -81,12 +66,19 @@ export function GaleriaServicio({ service }: { service: ServiceSummary }) {
           role="group"
         >
           {fotos.map((foto, indice) => (
-            <div className="aspect-[4/5] w-full shrink-0 snap-center" key={foto}>
+            <div className="aspect-[4/5] w-full shrink-0 snap-center overflow-hidden" key={foto.url}>
               <img
                 alt={`${service.name}, foto ${indice + 1} de ${fotos.length}`}
-                className="size-full object-contain"
+                className="size-full"
                 loading={indice === 0 ? "eager" : "lazy"}
-                src={foto}
+                src={foto.url}
+                /*
+                  `cover` y no `contain`: contain deja franjas vacias y esquinas
+                  cuadradas segun la proporcion de cada foto, que es el defecto
+                  que ya se corrigio para la portada. El encuadre decide que
+                  parte se ve.
+                */
+                style={foto.estilo}
               />
             </div>
           ))}
@@ -122,7 +114,7 @@ export function GaleriaServicio({ service }: { service: ServiceSummary }) {
                 ? "w-6 bg-[hsl(var(--primary))]"
                 : "w-2 bg-[hsl(var(--border))] hover:bg-[hsl(var(--primary)/0.5)]",
             )}
-            key={foto}
+            key={foto.url}
             onClick={() => irA(indice)}
             type="button"
           />

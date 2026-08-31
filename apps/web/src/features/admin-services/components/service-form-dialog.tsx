@@ -12,6 +12,7 @@ import {
   addGalleryImage,
   removeGalleryImage,
   removeServiceImage,
+  updateGalleryFraming,
   uploadServiceImage,
 } from "../services/services-admin-api";
 import { GaleriaEditor } from "./galeria-editor";
@@ -41,7 +42,7 @@ export function ServiceFormDialog({
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [encuadre, setEncuadre] = useState<Encuadre>({ imageFocalX: 50, imageFocalY: 50, imageScale: 100 });
   const [subiendo, setSubiendo] = useState(false);
-  const [galeria, setGaleria] = useState<{ id: string; url: string }[]>([]);
+  const [galeria, setGaleria] = useState<NonNullable<AdminService["images"]>>([]);
 
   // Al abrir se recarga el formulario con el servicio en edicion (o en blanco).
   useEffect(() => {
@@ -217,6 +218,17 @@ export function ServiceFormDialog({
                     setGaleria((await removeGalleryImage(service.id, imageId)).images ?? []);
                   } catch {
                     setError("No pudimos quitar la foto.");
+                  } finally {
+                    setSubiendo(false);
+                  }
+                }}
+                onReencuadrar={async (imageId, encuadre) => {
+                  setSubiendo(true);
+                  setError("");
+                  try {
+                    setGaleria((await updateGalleryFraming(service.id, imageId, encuadre)).images ?? []);
+                  } catch {
+                    setError("No pudimos guardar el encuadre.");
                   } finally {
                     setSubiendo(false);
                   }

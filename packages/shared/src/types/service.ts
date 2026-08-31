@@ -17,6 +17,12 @@ export type ServiceSummary = {
   imageFocalY?: number;
   /** 100 llena la tarjeta; menos deja aire, mas acerca. */
   imageScale?: number;
-  /** Fotos adicionales del carrusel. La portada es `imageUrl`. */
-  images?: { id: string; url: string }[];
+  /** Fotos adicionales del carrusel, con su propio encuadre. */
+  images?: {
+    id: string;
+    url: string;
+    imageFocalX?: number;
+    imageFocalY?: number;
+    imageScale?: number;
+  }[];
 };

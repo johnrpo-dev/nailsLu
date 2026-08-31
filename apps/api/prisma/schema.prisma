@@ -74,18 +74,25 @@ model Service {
 /**
  * Foto adicional de un servicio, para el carrusel.
  *
- * La portada no vive aqui: se queda en `Service.imageUrl` con su encuadre,
- * porque es la que se recorta en la tarjeta del catalogo. Estas se muestran
- * completas en el detalle, asi que no necesitan punto focal.
+ * La portada no vive aqui: se queda en `Service.imageUrl`, porque es la unica
+ * que aparece cuando la tarjeta no se ha tocado. Pero estas llevan su propio
+ * encuadre por el mismo motivo que ella: todas llenan el marco con
+ * `object-fit: cover`, y sin punto focal el recorte se come el diseno.
  */
 model ServiceImage {
-  id        String   @id @default(uuid())
-  serviceId String   @map("service_id")
-  url       String
-  sortOrder Int      @default(0) @map("sort_order")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  serviceId   String   @map("service_id")
+  url         String
+  sortOrder   Int      @default(0) @map("sort_order")
 
-  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  /// Encuadre propio, igual que la portada: sin el, cada foto se recorta por
+  /// el centro y el diseno de las unas rara vez cae ahi.
+  imageFocalX Int      @default(50) @map("image_focal_x")
+  imageFocalY Int      @default(50) @map("image_focal_y")
+  imageScale  Int      @default(100) @map("image_scale")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@index([serviceId, sortOrder])
   @@map("service_images")

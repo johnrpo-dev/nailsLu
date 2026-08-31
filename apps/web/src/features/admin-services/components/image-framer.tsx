@@ -36,7 +36,11 @@ export function ImageFramer({
   imageUrl?: string | null;
   encuadre: Encuadre;
   onEncuadreChange: (encuadre: Encuadre) => void;
-  onSubir: (file: File) => void;
+  /**
+   * Cambiar la foto por otra. Opcional: en el carrusel una foto se quita y se
+   * sube otra, asi que ahi no hay nada que reemplazar y el boton sobra.
+   */
+  onSubir?: (file: File) => void;
   onQuitar: () => void;
   ocupado: boolean;
 }) {
@@ -181,7 +185,7 @@ export function ImageFramer({
             // Se limpia antes de procesar para que volver a elegir el mismo
             // archivo dispare el cambio.
             e.target.value = "";
-            if (file) onSubir(await prepararFoto(file));
+            if (file && onSubir) onSubir(await prepararFoto(file));
           }}
           ref={archivoRef}
           type="file"
