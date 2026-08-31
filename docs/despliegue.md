@@ -250,14 +250,14 @@ Edita `apps/web/.env.local`:
 ```
 NEXT_PUBLIC_API_URL="https://tudominio.com/api"
 NEXT_PUBLIC_SITE_URL="https://tudominio.com"
-NEXT_PUBLIC_WHATSAPP_NUMBER="573003024035"
+NEXT_PUBLIC_WHATSAPP_NUMBER="573045442496"
 ```
 
-**El número de WhatsApp se decide a mano.** Mientras se hacen pruebas se queda
-el de pruebas (`573003024035`) para no llenarle el WhatsApp a Yeri de citas
-falsas. El suyo es `573045442496`. Cuando toque cambiarlo: editar esta variable
-y **volver a compilar la web** — las variables `NEXT_PUBLIC_` se incrustan al
-compilar, no basta con reiniciar.
+Ese es el número de Yeri, al que llegan los avisos de reserva.
+
+Si en algún momento hay que cambiarlo, ten en cuenta que **no basta con editar
+la variable y reiniciar**: las `NEXT_PUBLIC_` se incrustan al compilar, así que
+hay que volver a ejecutar `npm run build`.
 
 ---
 

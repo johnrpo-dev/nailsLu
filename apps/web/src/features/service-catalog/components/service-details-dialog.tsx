@@ -7,7 +7,7 @@ import type { ServiceSummary } from "@spa/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/shared/lib/format";
-import { estiloDeEncuadre, urlDeFoto } from "@/shared/lib/service-image";
+import { GaleriaServicio } from "./galeria-servicio";
 
 export function ServiceDetailsDialog({
   open,
@@ -52,16 +52,12 @@ export function ServiceDetailsDialog({
                     </Button>
                   </Dialog.Close>
                 </div>
-                {urlDeFoto(service.imageUrl) ? (
-                  <div className="mt-5 aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-[hsl(var(--surface))]">
-                    <img
-                      alt={service.name}
-                      className="size-full"
-                      src={urlDeFoto(service.imageUrl) as string}
-                      style={estiloDeEncuadre(service)}
-                    />
-                  </div>
-                ) : null}
+                {/*
+                  En el detalle las fotos se ven completas, sin recortar: el
+                  encuadre de la tarjeta existe para que la portada llene su
+                  marco, pero aqui la clienta quiere ver el diseno entero.
+                */}
+                <GaleriaServicio service={service} />
 
                 <Dialog.Description className="mt-4 text-sm leading-7 text-[hsl(var(--muted))]">
                   {service.description ??

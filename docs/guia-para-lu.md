@@ -78,6 +78,21 @@ horas a clientas nuevas. Si necesitas cancelar una cita existente, hazlo desde
 
 Para cambiar la contraseña. Nada más por ahora.
 
+## Fotos de cada servicio
+
+Cada servicio tiene una **portada** —la que sale en la tarjeta del catálogo, con
+su encuadre— y puedes añadirle **hasta 5 fotos más**, seis en total.
+
+Cuando una clienta toca la foto de un servicio, ve todas en un carrusel que pasa
+con el dedo. Si solo subiste dos, ve dos: no aparecen huecos vacíos.
+
+Piénsalo como una **muestra de tus mejores trabajos**, no como un álbum al día.
+Elige tres o cuatro por servicio, súbelas una vez, y refréscalas cuando te
+apetezca —un par de veces al año basta—. Si lo tomas como algo que hay que
+actualizar cada semana, acabarás abandonándolo.
+
+Se gestionan al editar el servicio, debajo de la portada.
+
 ## Festivos
 
 Los festivos de Colombia se cierran solos. No tienes que hacer nada: esos días

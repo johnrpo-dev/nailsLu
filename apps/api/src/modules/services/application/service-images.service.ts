@@ -31,6 +31,9 @@ const TIPOS_ACEPTADOS = [
  */
 const MAXIMO_BYTES = 30 * 1024 * 1024;
 
+/** Fotos por servicio, portada incluida. */
+const MAXIMO_FOTOS = 6;
+
 @Injectable()
 export class ServiceImagesService {
   constructor(private readonly prisma: PrismaService) {}
@@ -101,6 +104,88 @@ export class ServiceImagesService {
     });
   }
 
+  /**
+   * Anade una foto al carrusel de un servicio.
+   *
+   * El tope incluye la portada: seis fotos por servicio es suficiente para
+   * mostrar variedad y evita que la duena invierta horas en algo que nadie mira
+   * entero. Tambien mantiene el detalle ligero de cargar en datos moviles.
+   */
+  async anadirAlCarrusel(serviceId: string, archivo: { buffer: Buffer; mimetype: string; size: number }) {
+    const servicio = await this.prisma.service.findUnique({
+      where: { id: serviceId },
+      select: { id: true, imageUrl: true, _count: { select: { images: true } } },
+    });
+    if (!servicio) throw new NotFoundException("El servicio no existe");
+
+    const yaTiene = servicio._count.images + (servicio.imageUrl ? 1 : 0);
+    if (yaTiene >= MAXIMO_FOTOS) {
+      throw new BadRequestException(`Cada servicio admite hasta ${MAXIMO_FOTOS} fotos`);
+    }
+
+    const url = await this.procesarYGuardar(serviceId, archivo);
+    const ultima = await this.prisma.serviceImage.findFirst({
+      where: { serviceId },
+      orderBy: { sortOrder: "desc" },
+      select: { sortOrder: true },
+    });
+
+    await this.prisma.serviceImage.create({
+      data: { serviceId, url, sortOrder: (ultima?.sortOrder ?? 0) + 1 },
+    });
+
+    return this.prisma.service.findUnique({ where: { id: serviceId }, select: CAMPOS_IMAGEN });
+  }
+
+  /** Quita una foto del carrusel. La portada se quita con `quitar`. */
+  async quitarDelCarrusel(serviceId: string, imageId: string) {
+    const foto = await this.prisma.serviceImage.findFirst({
+      where: { id: imageId, serviceId },
+      select: { id: true, url: true },
+    });
+    if (!foto) throw new NotFoundException("La foto ya no existe");
+
+    await this.prisma.serviceImage.delete({ where: { id: foto.id } });
+    await this.borrarArchivo(foto.url);
+
+    return this.prisma.service.findUnique({ where: { id: serviceId }, select: CAMPOS_IMAGEN });
+  }
+
+  /**
+   * Valida, reprocesa y escribe el archivo. Devuelve la ruta publica.
+   *
+   * Lo comparten la portada y el carrusel: son la misma operacion, y duplicarla
+   * habria dejado dos sitios donde recordar el limite de tamano y los formatos
+   * que acepta un iPhone.
+   */
+  private async procesarYGuardar(
+    serviceId: string,
+    archivo: { buffer: Buffer; mimetype: string; size: number },
+  ) {
+    if (!TIPOS_ACEPTADOS.includes(archivo.mimetype)) {
+      throw new BadRequestException("Solo se aceptan imágenes JPG, PNG o WebP");
+    }
+    if (archivo.size > MAXIMO_BYTES) {
+      throw new BadRequestException("La imagen no puede pesar más de 30 MB");
+    }
+
+    let procesada: Buffer;
+    try {
+      procesada = await sharp(archivo.buffer)
+        .rotate()
+        .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 82 })
+        .toBuffer();
+    } catch {
+      throw new BadRequestException("No pudimos leer la imagen. ¿Está dañada?");
+    }
+
+    await fs.mkdir(CARPETA_SUBIDAS, { recursive: true });
+    const nombre = `${serviceId}-${crypto.randomBytes(6).toString("hex")}.webp`;
+    await fs.writeFile(path.join(CARPETA_SUBIDAS, nombre), procesada);
+    return `/uploads/${nombre}`;
+  }
+
   private async borrarArchivo(imageUrl: string | null) {
     if (!imageUrl) return;
     // Solo el nombre, nunca la ruta recibida: evita salir de la carpeta.
@@ -124,4 +209,6 @@ const CAMPOS_IMAGEN = {
   imageFocalX: true,
   imageFocalY: true,
   imageScale: true,
+  /** Fotos del carrusel, en el orden en que se subieron. */
+  images: { select: { id: true, url: true }, orderBy: { sortOrder: "asc" } },
 } as const;

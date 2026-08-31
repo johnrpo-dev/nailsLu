@@ -61,6 +61,20 @@ export class ServicesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post("admin/services/:id/images")
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: 30 * 1024 * 1024 } }))
+  anadirFoto(@Param("id") id: string, @UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException("No llego ninguna imagen");
+    return this.imagenes.anadirAlCarrusel(id, file);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete("admin/services/:id/images/:imageId")
+  quitarFoto(@Param("id") id: string, @Param("imageId") imageId: string) {
+    return this.imagenes.quitarDelCarrusel(id, imageId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete("admin/services/:id/image")
   removeImage(@Param("id") id: string) {
     return this.imagenes.quitar(id);

@@ -65,8 +65,30 @@ model Service {
 
   staff           StaffService[]
   bookingServices BookingService[]
+  /// Fotos adicionales del carrusel. La portada sigue siendo `imageUrl`.
+  images          ServiceImage[]
 
   @@map("services")
+}
+
+/**
+ * Foto adicional de un servicio, para el carrusel.
+ *
+ * La portada no vive aqui: se queda en `Service.imageUrl` con su encuadre,
+ * porque es la que se recorta en la tarjeta del catalogo. Estas se muestran
+ * completas en el detalle, asi que no necesitan punto focal.
+ */
+model ServiceImage {
+  id        String   @id @default(uuid())
+  serviceId String   @map("service_id")
+  url       String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId, sortOrder])
+  @@map("service_images")
 }
 
 model StaffService {

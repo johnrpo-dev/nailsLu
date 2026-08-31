@@ -8,7 +8,13 @@ import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
 import { formatDuration } from "@/shared/lib/format";
 import { readToken } from "@/features/admin-auth/services/auth-storage";
-import { removeServiceImage, uploadServiceImage } from "../services/services-admin-api";
+import {
+  addGalleryImage,
+  removeGalleryImage,
+  removeServiceImage,
+  uploadServiceImage,
+} from "../services/services-admin-api";
+import { GaleriaEditor } from "./galeria-editor";
 import { ImageFramer, type Encuadre } from "./image-framer";
 import type { AdminService, ServiceInput } from "../services/services-admin-api";
 
@@ -35,6 +41,7 @@ export function ServiceFormDialog({
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [encuadre, setEncuadre] = useState<Encuadre>({ imageFocalX: 50, imageFocalY: 50, imageScale: 100 });
   const [subiendo, setSubiendo] = useState(false);
+  const [galeria, setGaleria] = useState<{ id: string; url: string }[]>([]);
 
   // Al abrir se recarga el formulario con el servicio en edicion (o en blanco).
   useEffect(() => {
@@ -43,6 +50,8 @@ export function ServiceFormDialog({
     setDescription(service?.description ?? "");
     setDurationMinutes(service?.durationMinutes ?? 60);
     setImageUrl(service?.imageUrl ?? null);
+    // Sin esto, al abrir otro servicio se verian las fotos del anterior.
+    setGaleria(service?.images ?? []);
     setEncuadre({
       imageFocalX: service?.imageFocalX ?? 50,
       imageFocalY: service?.imageFocalY ?? 50,
@@ -195,6 +204,36 @@ export function ServiceFormDialog({
                 Crea el servicio primero y luego podrás subirle una foto desde aquí.
               </p>
             )}
+
+            {service ? (
+              <GaleriaEditor
+                fotos={galeria}
+                hayPortada={Boolean(imageUrl)}
+                ocupado={subiendo}
+                onQuitar={async (imageId) => {
+                  setSubiendo(true);
+                  setError("");
+                  try {
+                    setGaleria((await removeGalleryImage(service.id, imageId)).images ?? []);
+                  } catch {
+                    setError("No pudimos quitar la foto.");
+                  } finally {
+                    setSubiendo(false);
+                  }
+                }}
+                onSubir={async (file) => {
+                  setSubiendo(true);
+                  setError("");
+                  try {
+                    setGaleria((await addGalleryImage(service.id, file, readToken())).images ?? []);
+                  } catch (caught) {
+                    setError(caught instanceof Error ? caught.message : "No pudimos subir la foto.");
+                  } finally {
+                    setSubiendo(false);
+                  }
+                }}
+              />
+            ) : null}
 
             {error ? (
               <p

@@ -69,3 +69,25 @@ export async function uploadServiceImage(id: string, file: File, token: string |
 export function removeServiceImage(id: string) {
   return apiDelete<AdminService>(`/admin/services/${id}/image`);
 }
+
+/** Anade una foto al carrusel. Mismo motivo que arriba para no usar el cliente. */
+export async function addGalleryImage(id: string, file: File, token: string | null) {
+  const datos = new FormData();
+  datos.append("file", file);
+
+  const respuesta = await fetch(`${apiBaseUrl()}/admin/services/${id}/images`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: datos,
+  });
+
+  if (!respuesta.ok) {
+    const cuerpo = await respuesta.json().catch(() => null);
+    throw new Error(cuerpo?.message ?? "No pudimos subir la imagen.");
+  }
+  return (await respuesta.json()) as AdminService;
+}
+
+export function removeGalleryImage(id: string, imageId: string) {
+  return apiDelete<AdminService>(`/admin/services/${id}/images/${imageId}`);
+}

@@ -52,16 +52,14 @@ escrito sin jerga.
 
 ## 3. Decisiones tomadas — no rehacerlas sin motivo
 
-### El número de WhatsApp se queda en el de pruebas
+### El WhatsApp de los avisos
 
-`NEXT_PUBLIC_WHATSAPP_NUMBER` vale `573003024035`. Es un número de pruebas y
-**sigue así también en producción**, a propósito, para poder reservar contra el
-sitio real sin llenar de citas falsas el WhatsApp de Yeri.
+`NEXT_PUBLIC_WHATSAPP_NUMBER` vale `573045442496`, el de Yeri. Durante las
+pruebas estuvo apuntando a otro número a propósito, para no llenarle el
+WhatsApp de citas falsas; se cambió al suyo el 29 de agosto de 2026.
 
-El suyo es `573045442496`. El cambio es deliberado y lo decide John, no es un
-paso obligatorio del despliegue. Cuando toque: cambiar la variable y
-**recompilar la web** — las variables `NEXT_PUBLIC_` se incrustan al compilar,
-no basta con reiniciar.
+Si vuelve a cambiar: **no basta con editar la variable y reiniciar.** Las
+`NEXT_PUBLIC_` se incrustan al compilar, así que hay que rehacer el build.
 
 ### La notificación la resuelve WhatsApp Business
 
