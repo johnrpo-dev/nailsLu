@@ -1,18 +1,18 @@
+import type { ServiceSummary } from "@spa/shared";
 import { apiBaseUrl } from "@/shared/api/base-url";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/shared/api/client";
 
-export type AdminService = {
-  id: string;
-  name: string;
-  description?: string | null;
-  durationMinutes: number;
-  isActive: boolean;
-  sortOrder: number;
-  imageUrl?: string | null;
-  imageFocalX?: number;
-  imageFocalY?: number;
-  imageScale?: number;
-};
+/**
+ * Servicio tal como lo ve el panel.
+ *
+ * Deriva del tipo compartido en vez de repetir sus campos. Estaba duplicado a
+ * mano y se desincronizo en cuanto el catalogo publico gano las fotos del
+ * carrusel: el panel seguia sin conocerlas y el proyecto no compilaba.
+ *
+ * El panel ve lo mismo que el publico; si algun dia necesita algo de mas, se
+ * anade aqui como interseccion.
+ */
+export type AdminService = ServiceSummary;
 
 export type ServiceInput = {
   name: string;
