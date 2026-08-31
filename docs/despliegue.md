@@ -406,6 +406,7 @@ scp -P TU_PUERTO_SSH john@TU_IP:/srv/nailslu/backups/nailslu-*.db ./copias-local
 | El build muere sin explicación | Falta memoria. Ver la nota de memoria de intercambio abajo |
 | `Cannot find module '.prisma/client/default'` | Falta `npm run db:generate` |
 | El sitio carga pero el API devuelve 500 | La base esta vacia: el seed escribio en `dev.db`. Comprobar tamaños con `ls -la apps/api/prisma/*.db` |
+| `unable to open database file` al hacer la copia | El script no encuentra `DATABASE_URL`. Ejecutarlo desde `/srv/nailslu` y comprobar `apps/api/.env` |
 
 ---
 

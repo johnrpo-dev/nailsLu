@@ -9,14 +9,36 @@
  *
  * Conserva las ultimas COPIAS_A_CONSERVAR y borra las mas antiguas.
  */
-import { mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
+/*
+ * Cargar `.env` a mano. La unidad de systemd si pasa las variables, pero al
+ * ejecutar la copia desde la terminal no habia ninguna: el script caia a la
+ * base de desarrollo y fallaba con "unable to open database file" en un
+ * servidor donde esa base no existe. Justo antes de una actualizacion, que es
+ * cuando mas falta hace la copia.
+ */
+import "dotenv/config";
 
 const COPIAS_A_CONSERVAR = 14;
 
 const urlBase = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
 const origen = path.resolve(urlBase.replace(/^file:/, ""));
+
+if (!existsSync(origen)) {
+  console.error(
+    [
+      "",
+      `  No se encontro la base en ${origen}.`,
+      "",
+      "  Si esto es un servidor, revisa que apps/api/.env tenga DATABASE_URL",
+      "  y que el comando se ejecute desde apps/api.",
+      "",
+    ].join("\n"),
+  );
+  process.exit(1);
+}
 const destino = path.resolve(process.argv[2] ?? process.env.BACKUP_DIR ?? "./backups");
 
 mkdirSync(destino, { recursive: true });
