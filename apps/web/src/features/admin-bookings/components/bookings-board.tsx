@@ -1,24 +1,16 @@
 "use client";
 
-import { AlertCircle, CalendarDays, Check, Clock3, House, Phone, RotateCw, Store, UserRound, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { BookingStatus } from "@spa/shared";
-import { Badge } from "@/components/ui/badge";
+import { AlertCircle, CalendarDays, List, RotateCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/toast";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
 import { formatLongDate } from "@/shared/lib/date";
-import { formatDuration, formatHora, formatRangoHoras } from "@/shared/lib/format";
-import { restarMinutos, sumarMinutos } from "@/shared/lib/reglas-agenda";
-import {
-  listAdminBookings,
-  updateBookingStatus,
-  updateTravelBuffer,
-  type AdminBooking,
-  type BookingScope,
-} from "../services/bookings-admin-api";
+import { useAccionesReserva } from "../hooks/use-acciones-reserva";
+import { listAdminBookings, type AdminBooking, type BookingScope } from "../services/bookings-admin-api";
+import { CalendarioReservas } from "./calendario-reservas";
+import { TarjetaReserva } from "./tarjeta-reserva";
 
 const FILTROS: { valor: BookingScope; etiqueta: string }[] = [
   { valor: "active", etiqueta: "Activas" },
@@ -26,52 +18,92 @@ const FILTROS: { valor: BookingScope; etiqueta: string }[] = [
   { valor: "all", etiqueta: "Todas" },
 ];
 
-const ETIQUETA_ESTADO: Record<BookingStatus, string> = {
-  PENDING: "Por confirmar",
-  CONFIRMED: "Confirmada",
-  CANCELLED: "Cancelada",
-  COMPLETED: "Atendida",
-  NO_SHOW: "No asistió",
-};
+type Vista = "calendario" | "lista";
 
-const ESTILO_ESTADO: Record<BookingStatus, string> = {
-  PENDING: "border-[hsl(var(--border))] bg-[hsl(var(--surface))] text-[hsl(var(--foreground))]",
-  CONFIRMED: "border-[hsl(var(--accent)/0.5)] bg-[hsl(var(--accent)/0.16)] text-[hsl(var(--foreground))]",
-  CANCELLED: "border-[hsl(var(--danger)/0.4)] bg-[hsl(var(--danger)/0.1)] text-[hsl(var(--foreground))]",
-  COMPLETED: "border-[hsl(var(--border))] bg-[hsl(var(--surface))] text-[hsl(var(--muted))]",
-  NO_SHOW: "border-[hsl(var(--border))] bg-[hsl(var(--surface))] text-[hsl(var(--muted))]",
-};
+/** Recordar la vista es una comodidad de este navegador: si falla, se abre el calendario. */
+const CLAVE_VISTA = "nailslu.reservas.vista";
 
-/**
- * Opciones de traslado.
- *
- * Valores redondos en vez de un campo libre: se elige con el pulgar entre
- * clienta y clienta, y un desplegable corto es mas rapido que teclear. Si el
- * valor guardado no esta en la lista, se anade para no perderlo al abrirlo.
- */
-const OPCIONES_TRASLADO = [0, 10, 15, 20, 30, 40, 50, 60, 90];
-
-/**
- * Opciones para una cita concreta.
- *
- * Si el valor guardado no esta en la lista (porque cambio el valor por defecto,
- * o porque se ajusto desde otro sitio), se anade en su orden. Sin esto el
- * desplegable apareceria vacio y el primer cambio pisaria el valor real.
- */
-function opcionesTraslado(actual: number) {
-  return OPCIONES_TRASLADO.includes(actual)
-    ? OPCIONES_TRASLADO
-    : [...OPCIONES_TRASLADO, actual].sort((a, b) => a - b);
+function leerVista(): Vista {
+  try {
+    return window.localStorage.getItem(CLAVE_VISTA) === "lista" ? "lista" : "calendario";
+  } catch {
+    return "calendario";
+  }
 }
 
+/**
+ * Reservas del panel, en dos vistas.
+ *
+ * El calendario abre por defecto: de un vistazo dice que dias estan llenos,
+ * que es la pregunta que Yeri se hace al entrar. La lista se queda para lo que
+ * hace mejor, repasar lo pendiente sin ir mes a mes.
+ */
 export function BookingsBoard() {
+  const [vista, setVista] = useState<Vista>("calendario");
+
+  // Se lee al montar y no en el estado inicial: en el servidor no hay
+  // localStorage y el primer render tiene que coincidir con el del navegador.
+  useEffect(() => {
+    setVista(leerVista());
+  }, []);
+
+  function cambiarVista(nueva: Vista) {
+    setVista(nueva);
+    try {
+      window.localStorage.setItem(CLAVE_VISTA, nueva);
+    } catch {
+      // Navegacion privada o almacenamiento bloqueado: solo no se recuerda.
+    }
+  }
+
+  return (
+    <section>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-black tracking-tight">Reservas</h1>
+        <div
+          aria-label="Vista de reservas"
+          className="flex rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card)/0.76)] p-1"
+          role="group"
+        >
+          {(
+            [
+              { valor: "calendario", etiqueta: "Calendario", Icono: CalendarDays },
+              { valor: "lista", etiqueta: "Lista", Icono: List },
+            ] as const
+          ).map(({ valor, etiqueta, Icono }) => (
+            <button
+              aria-pressed={vista === valor}
+              className={cn(
+                "focus-ring inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-colors",
+                vista === valor
+                  ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                  : "text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]",
+              )}
+              key={valor}
+              onClick={() => cambiarVista(valor)}
+              type="button"
+            >
+              <Icono aria-hidden="true" className="size-4" />
+              {etiqueta}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5">{vista === "calendario" ? <CalendarioReservas /> : <ListaReservas />}</div>
+    </section>
+  );
+}
+
+function ListaReservas() {
   const [scope, setScope] = useState<BookingScope>("active");
   const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
-  const [actualizando, setActualizando] = useState<string | null>(null);
   const [recarga, setRecarga] = useState(0);
-  const { showToast } = useToast();
+  // En "Activas" una reserva cancelada o atendida ya no pertenece a la lista,
+  // asi que desaparece en vez de quedarse desactualizada.
+  const { actualizando, cambiarEstado, cambiarTraslado } = useAccionesReserva(setBookings, scope === "active");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -94,57 +126,6 @@ export function BookingsBoard() {
     return () => controller.abort();
   }, [scope, recarga]);
 
-  const cambiarEstado = useCallback(
-    async (booking: AdminBooking, nuevo: BookingStatus) => {
-      setActualizando(booking.id);
-      try {
-        const actualizada = await updateBookingStatus(booking.id, nuevo);
-        setBookings((actuales) =>
-          // En "Activas" una reserva cancelada o atendida ya no pertenece a la
-          // lista, asi que desaparece en vez de quedarse desactualizada.
-          scope === "active" && (nuevo === "CANCELLED" || nuevo === "COMPLETED" || nuevo === "NO_SHOW")
-            ? actuales.filter((item) => item.id !== booking.id)
-            : actuales.map((item) => (item.id === booking.id ? { ...item, ...actualizada } : item)),
-        );
-        showToast({ title: `${booking.client.fullName}: ${ETIQUETA_ESTADO[nuevo].toLowerCase()}` });
-      } catch (error) {
-        showToast({
-          title: "No pudimos actualizar la reserva",
-          description: error instanceof ApiError ? error.message : "Intenta de nuevo.",
-          variant: "error",
-        });
-      } finally {
-        setActualizando(null);
-      }
-    },
-    [scope, showToast],
-  );
-
-  const cambiarTraslado = useCallback(
-    async (booking: AdminBooking, minutos: number) => {
-      setActualizando(booking.id);
-      try {
-        const actualizada = await updateTravelBuffer(booking.id, minutos);
-        setBookings((actuales) =>
-          actuales.map((item) => (item.id === booking.id ? { ...item, ...actualizada } : item)),
-        );
-        showToast({
-          title: minutos === 0 ? "Traslado quitado" : `Traslado: ${minutos} min`,
-          description: "La agenda se recalculó con el hueco nuevo.",
-        });
-      } catch (error) {
-        showToast({
-          title: "No pudimos cambiar el traslado",
-          description: error instanceof ApiError ? error.message : "Intenta de nuevo.",
-          variant: "error",
-        });
-      } finally {
-        setActualizando(null);
-      }
-    },
-    [showToast],
-  );
-
   const agrupadas = useMemo(() => {
     const mapa = new Map<string, AdminBooking[]>();
     for (const booking of bookings) {
@@ -155,18 +136,15 @@ export function BookingsBoard() {
   }, [bookings]);
 
   return (
-    <section>
+    <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight">Reservas</h1>
-          <p className="mt-1 text-sm text-[hsl(var(--muted))]">
-            {status === "ready"
-              ? bookings.length === 1
-                ? "1 reserva"
-                : `${bookings.length} reservas`
-              : "Cargando agenda"}
-          </p>
-        </div>
+        <p className="text-sm text-[hsl(var(--muted))]">
+          {status === "ready"
+            ? bookings.length === 1
+              ? "1 reserva"
+              : `${bookings.length} reservas`
+            : "Cargando agenda"}
+        </p>
         <div className="flex gap-2" role="group" aria-label="Filtrar reservas">
           {FILTROS.map((filtro) => (
             <Button
@@ -219,151 +197,13 @@ export function BookingsBoard() {
                 </h2>
                 <ul className="mt-3 grid gap-3">
                   {delDia.map((booking) => (
-                    <li
-                      className="grid gap-4 rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/0.72)] p-4 sm:grid-cols-[1fr_auto] sm:items-center"
+                    <TarjetaReserva
+                      actualizando={actualizando === booking.id}
+                      booking={booking}
                       key={booking.id}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={cn(
-                              "rounded-full border px-3 py-1 text-xs font-bold",
-                              ESTILO_ESTADO[booking.status],
-                            )}
-                          >
-                            {ETIQUETA_ESTADO[booking.status]}
-                          </span>
-                          <Badge>
-                            <Clock3 aria-hidden="true" className="size-3.5" />
-                            {formatRangoHoras(booking.startTime, booking.endTime)}
-                          </Badge>
-                          <Badge>{formatDuration(booking.totalDurationMinutes)}</Badge>
-                        </div>
-
-                        <p className="mt-3 flex items-center gap-2 text-lg font-black">
-                          <UserRound aria-hidden="true" className="size-4 text-[hsl(var(--muted))]" />
-                          {booking.client.fullName}
-                        </p>
-                        <a
-                          className="focus-ring mt-1 inline-flex items-center gap-2 rounded-full text-sm font-semibold text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]"
-                          href={`https://wa.me/57${booking.client.phone}`}
-                          rel="noreferrer"
-                          target="_blank"
-                        >
-                          <Phone aria-hidden="true" className="size-3.5" />
-                          {booking.client.phone}
-                        </a>
-
-                        <p className="mt-2 text-sm leading-6 text-[hsl(var(--muted))]">
-                          {booking.services.map((s) => s.serviceNameSnapshot).join(", ")}
-                        </p>
-
-                        {/*
-                          El domicilio se destaca porque cambia su jornada: hay
-                          que salir, desplazarse y volver. Una cita en el spa es
-                          lo normal y no necesita gritar.
-                        */}
-                        {booking.serviceLocation === "DOMICILIO" ? (
-                          <div className="mt-3 grid gap-1 rounded-2xl border border-[hsl(var(--accent)/0.5)] bg-[hsl(var(--accent)/0.14)] p-3">
-                            <p className="flex items-center gap-2 text-sm font-black">
-                              <House aria-hidden="true" className="size-4 shrink-0" /> A domicilio
-                            </p>
-                            {/*
-                              El traslado se muestra porque explica un hueco en
-                              la agenda que si no pareceria tiempo libre: la
-                              siguiente cita no empieza cuando termina esta.
-                            */}
-                            <p className="text-xs font-semibold text-[hsl(var(--muted))]">
-                              {booking.travelBufferMinutes > 0 ? (
-                                <>
-                                  Agenda bloqueada de{" "}
-                                  {formatHora(restarMinutos(booking.startTime, booking.travelBufferMinutes))} a{" "}
-                                  {formatHora(sumarMinutos(booking.endTime, booking.travelBufferMinutes))}, contando el
-                                  viaje de ida y vuelta.
-                                </>
-                              ) : (
-                                <>Sin tiempo de traslado reservado.</>
-                              )}
-                            </p>
-
-                            {/*
-                              El valor por defecto son 50 minutos, el peor caso,
-                              porque al reservar nadie sabe donde vive la
-                              clienta. Al verlo aqui se puede ajustar: bajarlo
-                              devuelve franjas libres a la agenda.
-                            */}
-                            <label className="mt-1 flex flex-wrap items-center gap-2 text-xs font-bold">
-                              Traslado
-                              <select
-                                className="focus-ring min-h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-3 py-1 font-semibold"
-                                disabled={actualizando === booking.id}
-                                onChange={(event) => cambiarTraslado(booking, Number(event.target.value))}
-                                value={booking.travelBufferMinutes}
-                              >
-                                {opcionesTraslado(booking.travelBufferMinutes).map((minutos) => (
-                                  <option key={minutos} value={minutos}>
-                                    {minutos === 0 ? "Sin traslado" : formatDuration(minutos)}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            {booking.address ? (
-                              <a
-                                className="focus-ring rounded-xl text-sm leading-6 underline decoration-dotted underline-offset-4"
-                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(booking.address)}`}
-                                rel="noreferrer"
-                                target="_blank"
-                              >
-                                {booking.address}
-                              </a>
-                            ) : null}
-                          </div>
-                        ) : (
-                          <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-[hsl(var(--muted))]">
-                            <Store aria-hidden="true" className="size-3.5 shrink-0" /> En el spa
-                          </p>
-                        )}
-                        {booking.notes ? (
-                          <p className="mt-2 rounded-2xl bg-[hsl(var(--surface)/0.7)] p-3 text-sm leading-6">
-                            {booking.notes}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 sm:justify-end">
-                        {booking.status === "PENDING" ? (
-                          <Button
-                            disabled={actualizando === booking.id}
-                            onClick={() => cambiarEstado(booking, "CONFIRMED")}
-                            size="sm"
-                            type="button"
-                          >
-                            <Check aria-hidden="true" className="size-4" /> Confirmar
-                          </Button>
-                        ) : null}
-                        {booking.status === "CONFIRMED" ? (
-                          <Button
-                            disabled={actualizando === booking.id}
-                            onClick={() => cambiarEstado(booking, "COMPLETED")}
-                            size="sm"
-                            type="button"
-                          >
-                            <Check aria-hidden="true" className="size-4" /> Atendida
-                          </Button>
-                        ) : null}
-                        {booking.status === "PENDING" || booking.status === "CONFIRMED" ? (
-                          <Button
-                            disabled={actualizando === booking.id}
-                            onClick={() => cambiarEstado(booking, "CANCELLED")}
-                            size="sm"
-                            type="button"
-                            variant="secondary"
-                          >
-                            <X aria-hidden="true" className="size-4" /> Cancelar
-                          </Button>
-                        ) : null}
-                      </div>
-                    </li>
+                      onCambiarEstado={cambiarEstado}
+                      onCambiarTraslado={cambiarTraslado}
+                    />
                   ))}
                 </ul>
               </div>
@@ -371,6 +211,6 @@ export function BookingsBoard() {
           </div>
         )}
       </div>
-    </section>
+    </div>
   );
 }

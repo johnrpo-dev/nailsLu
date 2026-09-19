@@ -49,7 +49,7 @@ export class BookingsService {
     private readonly services: ServicesService,
   ) {}
 
-  listAdmin(query: { scope?: "active" | "all" | "today"; date?: string } = {}) {
+  listAdmin(query: { scope?: "active" | "all" | "today"; date?: string; from?: string; to?: string } = {}) {
     const scope = query.scope ?? "active";
     const where: Prisma.BookingWhereInput = {};
 
@@ -62,10 +62,21 @@ export class BookingsService {
     if (query.date) {
       where.scheduledDate = new Date(`${query.date}T00:00:00.000Z`);
     }
+    /*
+     * Rango para el calendario. Se combina con el `scope` como el resto: con
+     * `all` salen tambien canceladas y atendidas, que el calendario muestra
+     * tachadas o atenuadas en vez de esconderlas, igual que Google Calendar.
+     */
+    if (query.from || query.to) {
+      where.scheduledDate = {
+        ...(query.from ? { gte: new Date(`${query.from}T00:00:00.000Z`) } : {}),
+        ...(query.to ? { lte: new Date(`${query.to}T00:00:00.000Z`) } : {}),
+      };
+    }
 
     // Las activas se leen de la mas proxima a la mas lejana, que es el orden en
     // que ocurren; el historico se lee de la mas reciente hacia atras.
-    const cronologico = scope === "all" ? "desc" : "asc";
+    const cronologico = scope === "all" && !query.from ? "desc" : "asc";
 
     return this.prisma.booking.findMany({
       where,

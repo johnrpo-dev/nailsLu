@@ -13,4 +13,16 @@ export class ListBookingsQueryDto {
   @IsOptional()
   @IsDateString()
   date?: string;
+
+  /**
+   * Rango de fechas, ambos extremos incluidos. Lo usa el calendario del panel
+   * para pedir de una vez las seis semanas que muestra un mes.
+   */
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
 }

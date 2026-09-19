@@ -24,6 +24,16 @@ export function listAdminBookings(scope: BookingScope, signal?: AbortSignal) {
   return apiGet<AdminBooking[]>(`/admin/bookings?scope=${scope}`, signal);
 }
 
+/**
+ * Reservas entre dos fechas, ambas incluidas, en cualquier estado.
+ *
+ * Es lo que pide el calendario: las canceladas y atendidas tambien, para
+ * mostrarlas tachadas o atenuadas en vez de que el mes parezca vacio.
+ */
+export function listAdminBookingsEntre(desde: string, hasta: string, signal?: AbortSignal) {
+  return apiGet<AdminBooking[]>(`/admin/bookings?scope=all&from=${desde}&to=${hasta}`, signal);
+}
+
 export function updateBookingStatus(id: string, status: BookingStatus) {
   return apiPatch<AdminBooking>(`/admin/bookings/${id}/status`, { status });
 }

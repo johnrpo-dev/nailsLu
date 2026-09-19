@@ -1,6 +1,6 @@
 # NAILS LU SPA — estado y pendientes
 
-Estado al 31 de agosto de 2026. Repositorio: github.com/johnrpo-dev/nailsLu
+Estado al 19 de septiembre de 2026. Repositorio: github.com/johnrpo-dev/nailsLu
 
 **En producción y funcionando: https://nailslu.com**
 
@@ -120,6 +120,24 @@ Si se hace: **una sola regla de borrado, por fecha de la cita**, nunca por
 cambio de estado. Ella no va a marcar las citas como atendidas, y una regla que
 depende de eso deja fotos acumulándose para siempre.
 
+### Reservas: calendario de mes
+
+La pestaña Reservas abre en una vista de mes al estilo de Google Calendar:
+semana de domingo a sábado, seis filas fijas y cada cita como una etiqueta
+con la hora y el primer nombre. Al tocar un día se abre debajo su agenda con
+las mismas tarjetas de la lista, así que desde ahí también se confirma, se
+cancela y se ajusta el traslado.
+
+- **Colores:** confirmada rellena, pendiente con borde, atendida apagada,
+  cancelada tachada. Las canceladas **se muestran**, no se esconden: si no,
+  un día parece libre justo cuando una clienta acaba de cancelar.
+- **Máximo 3 por casilla** y después "+N más"; el detalle completo está en la
+  agenda del día.
+- **La lista sigue existiendo** (botón "Lista"), con sus filtros. El navegador
+  recuerda cuál se usó por última vez.
+- Pide al API las 42 casillas visibles (`?scope=all&from=…&to=…`), no solo el
+  mes, para que los días de los meses vecinos no aparezcan vacíos.
+
 ### Citas a domicilio y traslado
 
 La clienta elige spa o domicilio; a domicilio la dirección es obligatoria y
@@ -196,7 +214,7 @@ la dirección del API no tiene ruta que perder.
 
 | Qué | Estado |
 | --- | --- |
-| 8 avisos de `react-hooks/set-state-in-effect` | Dejados como aviso a propósito. El arreglo de fondo es mover las peticiones a `react-query`. |
+| 12 avisos de `react-hooks/set-state-in-effect` en la web (y uno de `exhaustive-deps`) | Dejados como aviso a propósito. El arreglo de fondo es mover las peticiones a `react-query`. |
 | `@tanstack/react-query`, `react-hook-form`, `@spa/ui` | Declarados y sin usar. |
 | Sesión del panel en `localStorage`, sin refresh token | 12 h y a volver a entrar. Aceptable para una sola usuaria. |
 | `staffId` sin filtro | Con varias manicuristas, la reserva de una bloquearía a todas. Hoy es un solo puesto. |
@@ -209,8 +227,8 @@ la dirección del API no tiene ruta que perder.
 
 ## Estado de la verificación
 
-`npm run lint` pasa en ambos workspaces, **98 pruebas automáticas** en verde
-(61 del API, 37 de la web) y el build compila incluyendo el chequeo de tipos.
+`npm run lint` pasa en ambos workspaces, **106 pruebas automáticas** en verde
+(61 del API, 45 de la web) y el build compila incluyendo el chequeo de tipos.
 
 Comprobado contra el sitio en producción: HTTPS con certificado válido, el
 catálogo carga, el panel exige sesión, los festivos cierran la agenda, y las
