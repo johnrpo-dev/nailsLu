@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createRollingDays, formatLongDate, toLocalIsoDate } from "../date";
+import { createRollingDays, formatLongDate, msHastaProximaMedianoche, toLocalIsoDate } from "../date";
 
 describe("toLocalIsoDate", () => {
   it("usa la fecha del reloj local, no la de UTC", () => {
@@ -43,5 +43,32 @@ describe("formatLongDate", () => {
     // mostraria el 10 de agosto.
     expect(formatLongDate("2026-08-11")).toContain("11");
     expect(formatLongDate("2026-08-11")).toContain("agosto");
+  });
+});
+
+describe("msHastaProximaMedianoche", () => {
+  const HORA = 60 * 60 * 1000;
+
+  it("cuenta lo que falta para el dia siguiente", () => {
+    expect(msHastaProximaMedianoche(new Date(2026, 7, 11, 23, 0, 0))).toBe(HORA);
+    expect(msHastaProximaMedianoche(new Date(2026, 7, 11, 21, 30, 0))).toBe(2.5 * HORA);
+  });
+
+  it("en la medianoche cuenta el dia entero, no cero", () => {
+    // Devolver cero haria girar el temporizador sin parar.
+    expect(msHastaProximaMedianoche(new Date(2026, 7, 11, 0, 0, 0))).toBe(24 * HORA);
+  });
+
+  it("cruza el fin de mes y el fin de ano", () => {
+    expect(msHastaProximaMedianoche(new Date(2026, 7, 31, 23, 0, 0))).toBe(HORA);
+    expect(msHastaProximaMedianoche(new Date(2026, 11, 31, 23, 0, 0))).toBe(HORA);
+  });
+
+  it("siempre es positivo, a cualquier hora del ano", () => {
+    for (let mes = 0; mes < 12; mes += 1) {
+      for (const hora of [0, 1, 6, 12, 18, 23]) {
+        expect(msHastaProximaMedianoche(new Date(2026, mes, 15, hora, 17, 42))).toBeGreaterThan(0);
+      }
+    }
   });
 });

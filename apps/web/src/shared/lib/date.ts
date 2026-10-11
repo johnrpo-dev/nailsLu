@@ -51,3 +51,19 @@ export function formatLongDate(iso: string) {
     month: "long",
   });
 }
+
+/**
+ * Milisegundos que faltan para la proxima medianoche local.
+ *
+ * Lo usa `useHoy` para despertarse justo cuando cambia el dia. Se construye la
+ * medianoche como "dia + 1 a las 00:00" en hora local y se deja que `Date`
+ * resuelva el fin de mes y de ano; hacerlo sumando 24 horas se equivocaria el
+ * dia que una zona cambia de horario.
+ *
+ * Nunca devuelve cero: justo en la medianoche faltan 24 horas para la
+ * siguiente, no cero, y un temporizador de cero giraria sin parar.
+ */
+export function msHastaProximaMedianoche(desde: Date) {
+  const medianoche = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate() + 1);
+  return medianoche.getTime() - desde.getTime();
+}

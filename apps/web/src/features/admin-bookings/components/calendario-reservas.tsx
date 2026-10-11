@@ -6,7 +6,8 @@ import type { BookingStatus } from "@spa/shared";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
-import { formatLongDate, todayIsoDate } from "@/shared/lib/date";
+import { formatLongDate } from "@/shared/lib/date";
+import { useHoy } from "@/shared/lib/use-hoy";
 import { useRovingFocus } from "@/shared/lib/use-roving-focus";
 import { useAccionesReserva } from "../hooks/use-acciones-reserva";
 import { INICIALES_SEMANA, diasDelMes, esDelMes, moverMes, resumenDeCitas, tituloMes } from "../lib/mes";
@@ -63,7 +64,7 @@ function diaInicial(ano: number, mes: number, hoy: string) {
  * calendario no es solo para mirar: desde aqui se confirma y se cancela igual.
  */
 export function CalendarioReservas() {
-  const [hoy] = useState(() => todayIsoDate());
+  const hoy = useHoy();
   const [vista, setVista] = useState(() => ({
     ano: Number(hoy.slice(0, 4)),
     mes: Number(hoy.slice(5, 7)) - 1,
@@ -75,7 +76,13 @@ export function CalendarioReservas() {
   const [recarga, setRecarga] = useState(0);
   const { actualizando, cambiarEstado, cambiarTraslado } = useAccionesReserva(setBookings, false);
 
-  const dias = useMemo(() => diasDelMes(vista.ano, vista.mes), [vista]);
+  /*
+   * Depende del ano y del mes, no del objeto `vista`: `irA` siempre crea uno
+   * nuevo, asi que memoizar sobre el recalculaba las 42 casillas y volvia a
+   * pedir el mismo mes. Se notaba en el boton "Hoy", que sigue habilitado
+   * cuando ya estas en el mes actual con otro dia elegido.
+   */
+  const dias = useMemo(() => diasDelMes(vista.ano, vista.mes), [vista.ano, vista.mes]);
 
   // Se piden las 42 casillas, no solo el mes: los dias de los meses vecinos
   // tambien se ven en la cuadricula y quedarian vacios aunque tengan citas.
