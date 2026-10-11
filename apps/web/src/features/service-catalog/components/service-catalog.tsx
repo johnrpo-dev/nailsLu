@@ -158,7 +158,9 @@ export function ServiceCatalog({
       </section>
       <ServiceDetailsDialog
         onOpenChange={(open) => !open && setDetails(null)}
+        onToggle={onToggle}
         open={Boolean(details)}
+        selected={details ? selectedIds.includes(details.id) : false}
         service={details}
       />
     </>

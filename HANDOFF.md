@@ -45,13 +45,38 @@ tiene los datos reales de la responsable. **No lo ha revisado un abogado.**
 Para un negocio de una sola persona el riesgo es bajo, pero conviene que lo lea
 alguien que sepa. Es lo único de esta lista con una obligación detrás.
 
+### Comprobaciones manuales del panel
+
+Pendientes del review del 11/10/2026 (PR #1, desplegado). Las tres son
+cambios de comportamiento en el navegador, y `apps/web` no tiene jsdom ni
+testing-library, asi que **ninguna prueba automatica las cubre**: se
+verificaron leyendo el codigo, no ejecutandolo.
+
+En `https://nailslu.com/admin/login`:
+
+1. **Vista "lista" sin parpadeo.** Cambiar a "Lista" y recargar la pagina. El
+   calendario no debe aparecer ni un instante antes de la lista.
+2. **Boton "Hoy" sin recargar.** En el mes actual, elegir un dia que no sea hoy
+   y pulsar "Hoy". No debe salir "Cargando citas..." ni atenuarse la
+   cuadricula.
+3. **Dia con solo citas canceladas.** Su casilla debe seguir mostrando los
+   chips tachados. El cambio esta en lo que anuncia el lector de pantalla
+   (antes decia "sin citas"), asi que sin lector basta confirmar que la casilla
+   no cambio de aspecto.
+
+Lo que si quedo verificado en produccion, con peticiones reales: una fecha con
+hora (`?date=2026-09-01T12:00:00Z`) y un dia inexistente (`?date=2026-02-31`)
+devuelven 400 en vez de un 500 y un rango equivocado.
+
 ### Tareas de Yeri
 
 1. **Cambiar la contraseña del panel.** El panel se lo recuerda hasta que lo
    haga.
-2. **Subir las fotos de los servicios.** Son 11 servicios; a tres o cuatro cada
-   uno, unas 40 fotos. Es una tarde de su tiempo y sin ellas el catálogo se ve
-   a medias.
+2. **Terminar las fotos de los servicios.** Al 11/10/2026 hay **36 fotos
+   subidas** sobre 10 servicios publicados, comprobado contra
+   `/api/public/services`: siete servicios con cinco fotos cada uno, Dipping
+   con una sola, y **Press on y Retiro con limpieza todavia sin ninguna**. Esos
+   tres son los que quedan.
 3. **Borrar las reservas de prueba** que quedaron del despliegue.
 
 Lo que necesita saber está en [docs/guia-para-lu.md](docs/guia-para-lu.md),
