@@ -72,6 +72,11 @@ devuelven 400 en vez de un 500 y un rango equivocado.
 
 #### De la card de servicio y los bloqueos (`9e0239b`)
 
+**Las del movil quedaron validadas a mano el 11/10/2026**, en el dispositivo
+real y sobre produccion. Se dejan escritas porque describen que se arreglo y
+por que, y porque siguen sin tener prueba automatica: si alguien vuelve a
+tocar el dialogo, esto es lo que hay que volver a mirar.
+
 **En el movil**, abriendo un servicio con cinco fotos (Semipermanente manos):
 
 4. **La X se ve siempre**, arriba a la derecha y con borde. Antes la card no
