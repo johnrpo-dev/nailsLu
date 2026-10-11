@@ -100,8 +100,8 @@ export function ServiceFormDialog({
               {service ? "Editar servicio" : "Nuevo servicio"}
             </Dialog.Title>
             <Dialog.Close asChild>
-              <Button aria-label="Cerrar" size="icon" type="button" variant="ghost">
-                <X aria-hidden="true" className="size-4" />
+              <Button aria-label="Cerrar" size="icon" type="button" variant="secondary">
+                <X aria-hidden="true" className="size-5" />
               </Button>
             </Dialog.Close>
           </div>

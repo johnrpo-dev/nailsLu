@@ -398,3 +398,51 @@ describe("festivos", () => {
     expect(celebrado.holiday).toBe("Reyes Magos");
   });
 });
+
+describe("listBlocks", () => {
+  /** Prisma falso que guarda el `where` en vez de responder. */
+  function capturar() {
+    const consultas: { date: { gte: Date; lte?: Date } }[] = [];
+    const prisma = {
+      availabilityBlock: {
+        findMany: async ({ where }: { where: { date: { gte: Date; lte?: Date } } }) => {
+          consultas.push(where);
+          return [];
+        },
+      },
+    } as unknown as PrismaService;
+    return { consultas, servicio: new AvailabilityService(prisma) };
+  }
+
+  /*
+   * El caso que motivo el arreglo. A las 21:00 de Bogota en UTC ya es el dia
+   * siguiente, asi que construir "hoy" con `toISOString()` movia el `gte` a
+   * manana y el panel dejaba de ver los bloqueos de hoy justo a la hora de
+   * cerrar y cuadrar el dia siguiente.
+   */
+  it("parte del dia del salon y no del de UTC", async () => {
+    vi.setSystemTime(new Date("2026-09-09T02:00:00.000Z")); // 21:00 del 8 en Bogota
+    const { servicio, consultas } = capturar();
+    await servicio.listBlocks();
+    vi.setSystemTime(new Date("2026-09-08T12:00:00.000Z"));
+
+    expect(consultas[0]?.date.gte).toEqual(new Date("2026-09-08T00:00:00.000Z"));
+  });
+
+  it("respeta el rango cuando se pide uno", async () => {
+    const { servicio, consultas } = capturar();
+    await servicio.listBlocks({ from: "2026-10-01", to: "2026-10-31" });
+
+    expect(consultas[0]?.date).toEqual({
+      gte: new Date("2026-10-01T00:00:00.000Z"),
+      lte: new Date("2026-10-31T00:00:00.000Z"),
+    });
+  });
+
+  it("sin `to` no acota el final: los bloqueos futuros siguen contando", async () => {
+    const { servicio, consultas } = capturar();
+    await servicio.listBlocks({ from: "2026-10-01" });
+
+    expect(consultas[0]?.date.lte).toBeUndefined();
+  });
+});

@@ -194,9 +194,15 @@ export class AvailabilityService {
   // --- Bloqueos y excepciones -------------------------------------------------
 
   listBlocks(range: { from?: string; to?: string } = {}) {
-    // Por defecto se miran los bloqueos de hoy en adelante: los pasados ya no
-    // afectan a ninguna reserva nueva.
-    const desde = range.from ? fechaUtc(range.from) : fechaUtc(new Date().toISOString().slice(0, 10));
+    /*
+     * Por defecto se miran los bloqueos de hoy en adelante: los pasados ya no
+     * afectan a ninguna reserva nueva.
+     *
+     * "Hoy" es el del salon, no el de UTC. Con `toISOString()` el panel dejaba
+     * de ver los bloqueos de hoy a partir de las 19:00 de Colombia, porque en
+     * UTC ya era manana: justo a la hora de cerrar y cuadrar el dia siguiente.
+     */
+    const desde = fechaUtc(range.from ?? todayIsoDate());
     return this.prisma.availabilityBlock.findMany({
       where: { date: { gte: desde, ...(range.to ? { lte: fechaUtc(range.to) } : {}) } },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],

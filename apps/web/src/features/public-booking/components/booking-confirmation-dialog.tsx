@@ -118,8 +118,8 @@ export function BookingConfirmationDialog({
                     reducedMotion={Boolean(reducedMotion)}
                   />
                   <Dialog.Close asChild>
-                    <Button aria-label="Cerrar confirmación" size="icon" type="button" variant="ghost">
-                      <X aria-hidden="true" className="size-4" />
+                    <Button aria-label="Cerrar confirmación" size="icon" type="button" variant="secondary">
+                      <X aria-hidden="true" className="size-5" />
                     </Button>
                   </Dialog.Close>
                 </div>
