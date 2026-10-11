@@ -45,12 +45,14 @@ tiene los datos reales de la responsable. **No lo ha revisado un abogado.**
 Para un negocio de una sola persona el riesgo es bajo, pero conviene que lo lea
 alguien que sepa. Es lo único de esta lista con una obligación detrás.
 
-### Comprobaciones manuales del panel
+### Comprobaciones manuales pendientes
 
-Pendientes del review del 11/10/2026 (PR #1, desplegado). Las tres son
-cambios de comportamiento en el navegador, y `apps/web` no tiene jsdom ni
-testing-library, asi que **ninguna prueba automatica las cubre**: se
-verificaron leyendo el codigo, no ejecutandolo.
+Todo lo de aqui esta desplegado y verificado por lectura de codigo, pero
+**ninguna prueba automatica lo cubre**: `apps/web` no tiene jsdom ni
+testing-library, asi que nada toca componentes. Son cambios que solo se ven
+en un navegador de verdad.
+
+#### Del review del 11/10/2026 (`c24da54`)
 
 En `https://nailslu.com/admin/login`:
 
@@ -67,6 +69,31 @@ En `https://nailslu.com/admin/login`:
 Lo que si quedo verificado en produccion, con peticiones reales: una fecha con
 hora (`?date=2026-09-01T12:00:00Z`) y un dia inexistente (`?date=2026-02-31`)
 devuelven 400 en vez de un 500 y un rango equivocado.
+
+#### De la card de servicio y los bloqueos (`9e0239b`)
+
+**En el movil**, abriendo un servicio con cinco fotos (Semipermanente manos):
+
+4. **La X se ve siempre**, arriba a la derecha y con borde. Antes la card no
+   tenia limite de alto y, al estar centrada, el recorte se la comia: 94px en
+   un iPhone SE, 44px en un Android de 360.
+5. **Tocar arriba o abajo de la card la cierra.** Antes la card cubria todo el
+   alto y a los lados solo quedaban 16px de overlay, asi que no habia donde
+   tocar.
+6. **Al pasar las fotos el pie no se mueve:** "Cerrar" y "Elegir este
+   servicio" quedan fijos.
+7. **"Elegir este servicio"** marca el servicio y pasa a "Elegido"; al cerrar,
+   la tarjeta del catalogo debe quedar seleccionada.
+8. **Press on y Retiro con limpieza** (sin fotos): la card debe verse bien
+   igual, solo sin galeria.
+
+**En el panel, despues de las 19:00 hora de Colombia** — antes de esa hora el
+fallo no se manifiesta:
+
+9. **Disponibilidad sigue mostrando los bloqueos de hoy.** El "hoy" por
+   defecto se construia en UTC, asi que a partir de las 19:00 el filtro se
+   iba a manana y los ocultaba. Esto si tiene prueba automatica
+   (`availability.service.spec.ts`), pero conviene verlo una vez.
 
 ### Tareas de Yeri
 
