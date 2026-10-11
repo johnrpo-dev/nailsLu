@@ -9,7 +9,7 @@ import { cn } from "@/shared/lib/cn";
 import { formatLongDate, todayIsoDate } from "@/shared/lib/date";
 import { useRovingFocus } from "@/shared/lib/use-roving-focus";
 import { useAccionesReserva } from "../hooks/use-acciones-reserva";
-import { INICIALES_SEMANA, diasDelMes, esDelMes, moverMes, tituloMes } from "../lib/mes";
+import { INICIALES_SEMANA, diasDelMes, esDelMes, moverMes, resumenDeCitas, tituloMes } from "../lib/mes";
 import { listAdminBookingsEntre, type AdminBooking } from "../services/bookings-admin-api";
 import { TarjetaReserva } from "./tarjeta-reserva";
 
@@ -224,6 +224,7 @@ export function CalendarioReservas() {
           {dias.map((dia, indice) => {
             const citas = porDia.get(dia) ?? [];
             const activas = citas.filter((cita) => cita.status !== "CANCELLED").length;
+            const canceladas = citas.length - activas;
             const delMes = esDelMes(dia, vista.ano, vista.mes);
             const esHoy = dia === hoy;
             const elegido = dia === seleccionado;
@@ -231,9 +232,7 @@ export function CalendarioReservas() {
 
             return (
               <button
-                aria-label={`${formatLongDate(dia)}${esHoy ? ", hoy" : ""}: ${
-                  activas === 0 ? "sin citas" : activas === 1 ? "1 cita" : `${activas} citas`
-                }`}
+                aria-label={`${formatLongDate(dia)}${esHoy ? ", hoy" : ""}: ${resumenDeCitas(activas, canceladas)}`}
                 aria-pressed={elegido}
                 className={cn(
                   "focus-ring flex min-h-20 min-w-0 flex-col items-stretch gap-0.5 border-b border-r border-[hsl(var(--border))] p-1 text-left transition-colors sm:min-h-28 sm:p-1.5",

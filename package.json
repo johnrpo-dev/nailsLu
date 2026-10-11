@@ -13,7 +13,6 @@
     "dev:api": "npm run start:dev -w @spa/api",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "format": "prettier --write .",
     "db:generate": "npm run prisma -w @spa/api -- generate",
     "db:migrate": "npm run prisma -w @spa/api -- migrate dev",
     "db:seed": "npm run prisma -w @spa/api -- db seed",
@@ -27,7 +26,6 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.3",
     "globals": "^17.11.0",
-    "prettier": "^3.3.3",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.68.0"
   }

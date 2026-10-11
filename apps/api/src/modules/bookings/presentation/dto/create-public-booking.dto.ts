@@ -8,10 +8,12 @@ import {
   IsOptional,
   IsString,
   Length,
+  Matches,
   MaxLength,
   ValidateIf,
 } from "class-validator";
 import { ServiceLocation } from "../../../../common/enums";
+import { FECHA_ISO } from "../../../../common/fechas";
 
 export class CreatePublicBookingDto {
   @IsString()
@@ -28,6 +30,7 @@ export class CreatePublicBookingDto {
   serviceIds!: string[];
 
   @IsDateString()
+  @Matches(FECHA_ISO, { message: "date debe tener formato YYYY-MM-DD" })
   date!: string;
 
   @IsString()

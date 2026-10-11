@@ -1,9 +1,11 @@
-import { IsDateString, IsIn, IsInt, IsOptional, IsString, Min } from "class-validator";
+import { IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, Min } from "class-validator";
 import { Type } from "class-transformer";
 import { ServiceLocation } from "../../../../common/enums";
+import { FECHA_ISO } from "../../../../common/fechas";
 
 export class PublicAvailabilityQueryDto {
   @IsDateString()
+  @Matches(FECHA_ISO, { message: "date debe tener formato YYYY-MM-DD" })
   date!: string;
 
   @Type(() => Number)

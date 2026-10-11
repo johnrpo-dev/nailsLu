@@ -9,6 +9,7 @@ import {
   type BookingStatus as BookingStatusValue,
 } from "../../../common/enums";
 import { MINUTOS_TRASLADO_DOMICILIO } from "../../../common/booking-rules";
+import { fechaUtc } from "../../../common/fechas";
 import { POLITICA_DATOS_VERSION, RETENCION_INTENTOS_DIAS } from "../../../common/privacy";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { addMinutes, rangesOverlap, todayIsoDate } from "../../availability/application/time.utils";
@@ -57,10 +58,10 @@ export class BookingsService {
       where.status = { in: ACTIVE_BOOKING_STATUSES };
     }
     if (scope === "today") {
-      where.scheduledDate = new Date(`${todayIsoDate()}T00:00:00.000Z`);
+      where.scheduledDate = fechaUtc(todayIsoDate());
     }
     if (query.date) {
-      where.scheduledDate = new Date(`${query.date}T00:00:00.000Z`);
+      where.scheduledDate = fechaUtc(query.date);
     }
     /*
      * Rango para el calendario. Se combina con el `scope` como el resto: con
@@ -69,8 +70,8 @@ export class BookingsService {
      */
     if (query.from || query.to) {
       where.scheduledDate = {
-        ...(query.from ? { gte: new Date(`${query.from}T00:00:00.000Z`) } : {}),
-        ...(query.to ? { lte: new Date(`${query.to}T00:00:00.000Z`) } : {}),
+        ...(query.from ? { gte: fechaUtc(query.from) } : {}),
+        ...(query.to ? { lte: fechaUtc(query.to) } : {}),
       };
     }
 
@@ -187,7 +188,7 @@ export class BookingsService {
 
     try {
       return await this.prisma.$transaction(async (tx) => {
-        const scheduledDate = new Date(`${dto.date}T00:00:00.000Z`);
+        const scheduledDate = fechaUtc(dto.date);
         const activeBookings = await tx.booking.findMany({
           where: {
             scheduledDate,

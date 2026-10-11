@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diasDelMes, esDelMes, moverMes, tituloMes } from "../mes";
+import { diasDelMes, esDelMes, moverMes, resumenDeCitas, tituloMes } from "../mes";
 
 describe("diasDelMes", () => {
   it("siempre devuelve seis semanas", () => {
@@ -53,5 +53,30 @@ describe("tituloMes y esDelMes", () => {
   it("distingue los dias de los meses vecinos", () => {
     expect(esDelMes("2026-09-15", 2026, 8)).toBe(true);
     expect(esDelMes("2026-08-30", 2026, 8)).toBe(false);
+  });
+});
+
+describe("resumenDeCitas", () => {
+  it("un dia libre de verdad", () => {
+    expect(resumenDeCitas(0, 0)).toBe("sin citas");
+  });
+
+  it("concuerda en singular y plural", () => {
+    expect(resumenDeCitas(1, 0)).toBe("1 cita");
+    expect(resumenDeCitas(3, 0)).toBe("3 citas");
+  });
+
+  /*
+   * El caso que motivo el helper: antes la etiqueta solo contaba las activas y
+   * este dia se anunciaba "sin citas" mientras la casilla mostraba dos chips
+   * tachados.
+   */
+  it("nombra las canceladas de un dia sin citas activas", () => {
+    expect(resumenDeCitas(0, 2)).toBe("sin citas, 2 canceladas");
+    expect(resumenDeCitas(0, 1)).toBe("sin citas, 1 cancelada");
+  });
+
+  it("suma las canceladas a las activas", () => {
+    expect(resumenDeCitas(2, 1)).toBe("2 citas, 1 cancelada");
   });
 });

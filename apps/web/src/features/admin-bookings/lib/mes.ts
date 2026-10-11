@@ -65,3 +65,17 @@ export function moverMes(ano: number, mes: number, delta: number) {
 export function esDelMes(fechaIso: string, ano: number, mes: number) {
   return Number(fechaIso.slice(0, 4)) === ano && Number(fechaIso.slice(5, 7)) - 1 === mes;
 }
+
+/**
+ * Lo que anuncia un lector de pantalla al llegar a una casilla del mes.
+ *
+ * Las canceladas se nombran aparte porque la cuadricula ya las muestra
+ * tachadas: si la etiqueta solo contara las activas, un dia cuyas citas se
+ * cancelaron todas se anunciaria como "sin citas" mientras en pantalla se ven
+ * tres. Justo el dia que parece libre y no lo esta es el que hay que revisar.
+ */
+export function resumenDeCitas(activas: number, canceladas: number) {
+  const partes = [activas === 0 ? "sin citas" : activas === 1 ? "1 cita" : `${activas} citas`];
+  if (canceladas > 0) partes.push(canceladas === 1 ? "1 cancelada" : `${canceladas} canceladas`);
+  return partes.join(", ");
+}
