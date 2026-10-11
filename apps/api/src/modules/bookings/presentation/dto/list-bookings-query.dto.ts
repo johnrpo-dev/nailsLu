@@ -1,4 +1,5 @@
-import { IsDateString, IsIn, IsOptional } from "class-validator";
+import { IsDateString, IsIn, IsOptional, Matches } from "class-validator";
+import { FECHA_ISO } from "../../../../common/fechas";
 
 export class ListBookingsQueryDto {
   /**
@@ -12,6 +13,7 @@ export class ListBookingsQueryDto {
 
   @IsOptional()
   @IsDateString()
+  @Matches(FECHA_ISO, { message: "date debe tener formato YYYY-MM-DD" })
   date?: string;
 
   /**
@@ -20,9 +22,11 @@ export class ListBookingsQueryDto {
    */
   @IsOptional()
   @IsDateString()
+  @Matches(FECHA_ISO, { message: "from debe tener formato YYYY-MM-DD" })
   from?: string;
 
   @IsOptional()
   @IsDateString()
+  @Matches(FECHA_ISO, { message: "to debe tener formato YYYY-MM-DD" })
   to?: string;
 }

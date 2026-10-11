@@ -9,6 +9,7 @@ import {
   type BookingStatus as BookingStatusValue,
 } from "../../../common/enums";
 import { MINUTOS_TRASLADO_DOMICILIO } from "../../../common/booking-rules";
+import { fechaUtc } from "../../../common/fechas";
 import { POLITICA_DATOS_VERSION, RETENCION_INTENTOS_DIAS } from "../../../common/privacy";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { addMinutes, rangesOverlap, todayIsoDate } from "../../availability/application/time.utils";
@@ -56,27 +57,45 @@ export class BookingsService {
     if (scope === "active") {
       where.status = { in: ACTIVE_BOOKING_STATUSES };
     }
+    /*
+     * Las tres formas de filtrar por fecha son excluyentes: `today` y `date`
+     * fijan un dia, `from`/`to` un rango. Las tres escribian sobre la misma
+     * propiedad y ganaba la ultima, asi que `?scope=today&from=2020-01-01`
+     * devolvia el rango entero creyendo pedir hoy. Un 400 avisa; una respuesta
+     * que no es la que se pidio, no.
+     *
+     * El filtro de fecha si se combina con el `scope`: el calendario pide
+     * `all` con un rango para que salgan tambien canceladas y atendidas, que
+     * muestra tachadas o atenuadas en vez de esconderlas.
+     */
+    const rango = Boolean(query.from || query.to);
+    const filtros = [scope === "today", Boolean(query.date), rango].filter(Boolean).length;
+    if (filtros > 1) {
+      throw new BadRequestException("Usa scope=today, date o from/to, pero solo uno");
+    }
+
     if (scope === "today") {
-      where.scheduledDate = new Date(`${todayIsoDate()}T00:00:00.000Z`);
+      where.scheduledDate = fechaUtc(todayIsoDate());
     }
     if (query.date) {
-      where.scheduledDate = new Date(`${query.date}T00:00:00.000Z`);
+      where.scheduledDate = fechaUtc(query.date);
     }
-    /*
-     * Rango para el calendario. Se combina con el `scope` como el resto: con
-     * `all` salen tambien canceladas y atendidas, que el calendario muestra
-     * tachadas o atenuadas en vez de esconderlas, igual que Google Calendar.
-     */
-    if (query.from || query.to) {
+    if (rango) {
       where.scheduledDate = {
-        ...(query.from ? { gte: new Date(`${query.from}T00:00:00.000Z`) } : {}),
-        ...(query.to ? { lte: new Date(`${query.to}T00:00:00.000Z`) } : {}),
+        ...(query.from ? { gte: fechaUtc(query.from) } : {}),
+        ...(query.to ? { lte: fechaUtc(query.to) } : {}),
       };
     }
 
-    // Las activas se leen de la mas proxima a la mas lejana, que es el orden en
-    // que ocurren; el historico se lee de la mas reciente hacia atras.
-    const cronologico = scope === "all" && !query.from ? "desc" : "asc";
+    /*
+     * Las activas se leen de la mas proxima a la mas lejana, que es el orden en
+     * que ocurren; el historico se lee de la mas reciente hacia atras.
+     *
+     * Con un dia o un rango manda siempre el orden natural, aunque el scope sea
+     * `all`: eso es una agenda, no un historico, y el calendario la pinta de
+     * arriba abajo.
+     */
+    const cronologico = scope === "all" && !rango && !query.date ? "desc" : "asc";
 
     return this.prisma.booking.findMany({
       where,
@@ -187,7 +206,7 @@ export class BookingsService {
 
     try {
       return await this.prisma.$transaction(async (tx) => {
-        const scheduledDate = new Date(`${dto.date}T00:00:00.000Z`);
+        const scheduledDate = fechaUtc(dto.date);
         const activeBookings = await tx.booking.findMany({
           where: {
             scheduledDate,

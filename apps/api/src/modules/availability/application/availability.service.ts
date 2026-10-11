@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { MINUTOS_TRASLADO_DOMICILIO } from "../../../common/booking-rules";
+import { fechaUtc } from "../../../common/fechas";
 import { festivoDe, festivosDe } from "../../../common/festivos-colombia";
 import { ACTIVE_BOOKING_STATUSES, AvailabilityBlockType, ServiceLocation } from "../../../common/enums";
 import { PrismaService } from "../../../prisma/prisma.service";
@@ -46,16 +47,12 @@ export function huecoOcupado(startTime: string, endTime: string, traslado: numbe
 
 type Ventana = { startTime: string; endTime: string };
 
-function aFecha(iso: string) {
-  return new Date(`${iso}T00:00:00.000Z`);
-}
-
 @Injectable()
 export class AvailabilityService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listSlots(query: AvailabilityQuery) {
-    const date = aFecha(query.date);
+    const date = fechaUtc(query.date);
     const weekday = date.getUTCDay();
     const businessHours = await this.prisma.businessHour.findMany({
       where: { weekday, isActive: true },
@@ -199,9 +196,9 @@ export class AvailabilityService {
   listBlocks(range: { from?: string; to?: string } = {}) {
     // Por defecto se miran los bloqueos de hoy en adelante: los pasados ya no
     // afectan a ninguna reserva nueva.
-    const desde = range.from ? aFecha(range.from) : aFecha(new Date().toISOString().slice(0, 10));
+    const desde = range.from ? fechaUtc(range.from) : fechaUtc(new Date().toISOString().slice(0, 10));
     return this.prisma.availabilityBlock.findMany({
-      where: { date: { gte: desde, ...(range.to ? { lte: aFecha(range.to) } : {}) } },
+      where: { date: { gte: desde, ...(range.to ? { lte: fechaUtc(range.to) } : {}) } },
       orderBy: [{ date: "asc" }, { startTime: "asc" }],
     });
   }
@@ -221,7 +218,7 @@ export class AvailabilityService {
     return this.prisma.availabilityBlock.create({
       data: {
         staffId: dto.staffId,
-        date: aFecha(dto.date),
+        date: fechaUtc(dto.date),
         startTime: dto.startTime,
         endTime: dto.endTime,
         type: dto.type,

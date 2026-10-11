@@ -6,10 +6,11 @@ import type { BookingStatus } from "@spa/shared";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/cn";
-import { formatLongDate, todayIsoDate } from "@/shared/lib/date";
+import { formatLongDate } from "@/shared/lib/date";
+import { useHoy } from "@/shared/lib/use-hoy";
 import { useRovingFocus } from "@/shared/lib/use-roving-focus";
 import { useAccionesReserva } from "../hooks/use-acciones-reserva";
-import { INICIALES_SEMANA, diasDelMes, esDelMes, moverMes, tituloMes } from "../lib/mes";
+import { INICIALES_SEMANA, diasDelMes, esDelMes, moverMes, resumenDeCitas, tituloMes } from "../lib/mes";
 import { listAdminBookingsEntre, type AdminBooking } from "../services/bookings-admin-api";
 import { TarjetaReserva } from "./tarjeta-reserva";
 
@@ -63,7 +64,7 @@ function diaInicial(ano: number, mes: number, hoy: string) {
  * calendario no es solo para mirar: desde aqui se confirma y se cancela igual.
  */
 export function CalendarioReservas() {
-  const [hoy] = useState(() => todayIsoDate());
+  const hoy = useHoy();
   const [vista, setVista] = useState(() => ({
     ano: Number(hoy.slice(0, 4)),
     mes: Number(hoy.slice(5, 7)) - 1,
@@ -75,7 +76,13 @@ export function CalendarioReservas() {
   const [recarga, setRecarga] = useState(0);
   const { actualizando, cambiarEstado, cambiarTraslado } = useAccionesReserva(setBookings, false);
 
-  const dias = useMemo(() => diasDelMes(vista.ano, vista.mes), [vista]);
+  /*
+   * Depende del ano y del mes, no del objeto `vista`: `irA` siempre crea uno
+   * nuevo, asi que memoizar sobre el recalculaba las 42 casillas y volvia a
+   * pedir el mismo mes. Se notaba en el boton "Hoy", que sigue habilitado
+   * cuando ya estas en el mes actual con otro dia elegido.
+   */
+  const dias = useMemo(() => diasDelMes(vista.ano, vista.mes), [vista.ano, vista.mes]);
 
   // Se piden las 42 casillas, no solo el mes: los dias de los meses vecinos
   // tambien se ven en la cuadricula y quedarian vacios aunque tengan citas.
@@ -224,6 +231,7 @@ export function CalendarioReservas() {
           {dias.map((dia, indice) => {
             const citas = porDia.get(dia) ?? [];
             const activas = citas.filter((cita) => cita.status !== "CANCELLED").length;
+            const canceladas = citas.length - activas;
             const delMes = esDelMes(dia, vista.ano, vista.mes);
             const esHoy = dia === hoy;
             const elegido = dia === seleccionado;
@@ -231,9 +239,7 @@ export function CalendarioReservas() {
 
             return (
               <button
-                aria-label={`${formatLongDate(dia)}${esHoy ? ", hoy" : ""}: ${
-                  activas === 0 ? "sin citas" : activas === 1 ? "1 cita" : `${activas} citas`
-                }`}
+                aria-label={`${formatLongDate(dia)}${esHoy ? ", hoy" : ""}: ${resumenDeCitas(activas, canceladas)}`}
                 aria-pressed={elegido}
                 className={cn(
                   "focus-ring flex min-h-20 min-w-0 flex-col items-stretch gap-0.5 border-b border-r border-[hsl(var(--border))] p-1 text-left transition-colors sm:min-h-28 sm:p-1.5",

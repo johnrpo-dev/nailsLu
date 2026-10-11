@@ -39,13 +39,16 @@ function leerVista(): Vista {
  * hace mejor, repasar lo pendiente sin ir mes a mes.
  */
 export function BookingsBoard() {
-  const [vista, setVista] = useState<Vista>("calendario");
-
-  // Se lee al montar y no en el estado inicial: en el servidor no hay
-  // localStorage y el primer render tiene que coincidir con el del navegador.
-  useEffect(() => {
-    setVista(leerVista());
-  }, []);
+  /*
+   * Se lee en el estado inicial, no en un efecto.
+   *
+   * No hay riesgo de desajuste con el servidor porque `AdminShell` devuelve un
+   * skeleton mientras la sesion no esta lista, asi que este cuerpo solo corre
+   * en el navegador. Leerlo en un efecto costaba un parpadeo del calendario en
+   * cada carga para quien tiene guardada la lista, y una peticion de las 42
+   * casillas que se abortaba al instante.
+   */
+  const [vista, setVista] = useState<Vista>(leerVista);
 
   function cambiarVista(nueva: Vista) {
     setVista(nueva);

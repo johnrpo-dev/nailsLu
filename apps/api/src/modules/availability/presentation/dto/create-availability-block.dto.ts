@@ -1,4 +1,5 @@
 import { IsDateString, IsIn, IsOptional, IsString, Length, Matches } from "class-validator";
+import { FECHA_ISO } from "../../../../common/fechas";
 
 const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -8,6 +9,7 @@ export class CreateAvailabilityBlockDto {
   staffId?: string;
 
   @IsDateString()
+  @Matches(FECHA_ISO, { message: "date debe tener formato YYYY-MM-DD" })
   date!: string;
 
   @Matches(HORA, { message: "startTime debe tener formato HH:MM" })
