@@ -13,7 +13,6 @@ export const publicBookingSchema = z.object({
   serviceIds: z.array(z.uuid()).min(1),
   date: z.iso.date(),
   startTime: z.string().regex(/^\d{2}:\d{2}$/),
-  staffId: z.uuid().optional(),
   notes: z.string().max(500).optional(),
   /** Donde se presta el servicio. */
   serviceLocation: z.enum(["SPA", "DOMICILIO"]),

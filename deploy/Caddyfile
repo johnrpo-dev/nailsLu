@@ -21,7 +21,11 @@ nailslu.com, www.nailslu.com {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
+		# Ninguna pagina ajena puede cargar el sitio en un marco: sin esto el
+		# panel se podria esconder dentro de otra web para robar clics.
+		X-Frame-Options "DENY"
 		-Server
+		-X-Powered-By
 	}
 
 	log {

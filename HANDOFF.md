@@ -274,6 +274,7 @@ la dirección del API no tiene ruta que perder.
 | 11 avisos de `react-hooks/set-state-in-effect` en la web (y uno de `exhaustive-deps`) | Dejados como aviso a propósito. El arreglo de fondo es mover las peticiones a `react-query`. |
 | El workspace `packages/ui` | Tres archivos que nadie importa. Las dependencias que antes sobraban (`@tanstack/react-query`, `react-hook-form`) ya se quitaron; `packages/shared` si se usa, en 17 archivos. |
 | Sesión del panel en `localStorage`, sin refresh token | 12 h y a volver a entrar. Aceptable para una sola usuaria. |
+| Cambiar la contraseña no cierra las sesiones abiertas | Un token robado sigue valiendo hasta que caduca (12 h como mucho). Solo `GET /auth/me` consulta la base; el resto de rutas confía en la firma. Se cerraría con un contador de versión en `User` dentro del token. |
 | `staffId` sin filtro | Con varias manicuristas, la reserva de una bloquearía a todas. Hoy es un solo puesto. |
 | Contador del rate limit en memoria | Sirve con una sola instancia. |
 | Las fotos del carrusel no se pueden reordenar | Salen en el orden en que se suben. |

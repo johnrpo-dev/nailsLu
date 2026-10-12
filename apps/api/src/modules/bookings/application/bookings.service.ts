@@ -193,9 +193,14 @@ export class BookingsService {
     const trasladoNuevo =
       dto.serviceLocation === ServiceLocation.DOMICILIO ? MINUTOS_TRASLADO_DOMICILIO : 0;
 
+    /*
+     * La clienta no elige manicurista: hay un solo puesto y la reserva se
+     * compara con TODAS las citas del dia. Antes el API aceptaba `staffId`, y
+     * con el id de la duena la comprobacion solo miraba las citas de ese id,
+     * dejando fuera las de la web, que se guardan sin el.
+     */
     const isAvailable = await this.availability.assertSlotAvailable({
       date: dto.date,
-      staffId: dto.staffId,
       durationMinutes: totalDurationMinutes,
       startTime: dto.startTime,
       serviceLocation: dto.serviceLocation,
@@ -210,7 +215,6 @@ export class BookingsService {
         const activeBookings = await tx.booking.findMany({
           where: {
             scheduledDate,
-            staffId: dto.staffId,
             status: { in: ACTIVE_BOOKING_STATUSES },
           },
         });
@@ -259,7 +263,6 @@ export class BookingsService {
           data: {
             publicToken: crypto.randomBytes(24).toString("hex"),
             clientId: client.id,
-            staffId: dto.staffId,
             status: BookingStatus.PENDING,
             scheduledDate,
             startTime: dto.startTime,

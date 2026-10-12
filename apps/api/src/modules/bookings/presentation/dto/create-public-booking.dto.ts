@@ -38,10 +38,6 @@ export class CreatePublicBookingDto {
 
   @IsOptional()
   @IsString()
-  staffId?: string;
-
-  @IsOptional()
-  @IsString()
   @MaxLength(500)
   notes?: string;
 

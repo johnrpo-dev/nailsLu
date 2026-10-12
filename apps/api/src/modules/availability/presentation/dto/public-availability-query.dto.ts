@@ -1,4 +1,4 @@
-import { IsDateString, IsIn, IsInt, IsOptional, IsString, Matches, Min } from "class-validator";
+import { IsDateString, IsIn, IsInt, IsOptional, Matches, Min } from "class-validator";
 import { Type } from "class-transformer";
 import { ServiceLocation } from "../../../../common/enums";
 import { FECHA_ISO } from "../../../../common/fechas";
@@ -12,10 +12,6 @@ export class PublicAvailabilityQueryDto {
   @IsInt()
   @Min(5)
   durationMinutes!: number;
-
-  @IsOptional()
-  @IsString()
-  staffId?: string;
 
   /**
    * Modalidad de la cita que se quiere agendar.
