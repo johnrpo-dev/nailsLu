@@ -1,6 +1,6 @@
 # NAILS LU SPA — estado y pendientes
 
-Estado al 19 de septiembre de 2026. Repositorio: github.com/johnrpo-dev/nailsLu
+Estado al 11 de octubre de 2026. Repositorio: github.com/johnrpo-dev/nailsLu
 
 **En producción y funcionando: https://nailslu.com**
 
@@ -271,21 +271,27 @@ la dirección del API no tiene ruta que perder.
 
 | Qué | Estado |
 | --- | --- |
-| 12 avisos de `react-hooks/set-state-in-effect` en la web (y uno de `exhaustive-deps`) | Dejados como aviso a propósito. El arreglo de fondo es mover las peticiones a `react-query`. |
-| `@tanstack/react-query`, `react-hook-form`, `@spa/ui` | Declarados y sin usar. |
+| 11 avisos de `react-hooks/set-state-in-effect` en la web (y uno de `exhaustive-deps`) | Dejados como aviso a propósito. El arreglo de fondo es mover las peticiones a `react-query`. |
+| El workspace `packages/ui` | Tres archivos que nadie importa. Las dependencias que antes sobraban (`@tanstack/react-query`, `react-hook-form`) ya se quitaron; `packages/shared` si se usa, en 17 archivos. |
 | Sesión del panel en `localStorage`, sin refresh token | 12 h y a volver a entrar. Aceptable para una sola usuaria. |
 | `staffId` sin filtro | Con varias manicuristas, la reserva de una bloquearía a todas. Hoy es un solo puesto. |
 | Contador del rate limit en memoria | Sirve con una sola instancia. |
 | Las fotos del carrusel no se pueden reordenar | Salen en el orden en que se suben. |
-| `npm audit`: 3 vulnerabilidades altas | En `prisma` → `@prisma/config` → `deepmerge-ts`. Herramienta de línea de comandos, no alcanzable desde internet. `audit fix --force` cambiaría la versión de Prisma. |
+| `npm audit`: 9 vulnerabilidades altas | Las que miraban a internet se cerraron el 11/10/2026 con `npm audit fix`: `next` y `proxy-addr` eran **criticas** —envenenamiento de cache en SSG self-hosted, y suplantacion de IP que permitia saltarse el limite de peticiones, que es el codigo que usamos con `TRUST_PROXY=1`— mas cinco avisos de DoS en `multer`, el que recibe las fotos. Quedan nueve, todas en dos cadenas de herramientas: la CLI de `prisma` (incluido `mysql2`, que con SQLite no se carga) y `eslint-config-next`. No son alcanzables desde internet, y `audit fix --force` las "arregla" **bajando** de version (prisma 7.10 → 6.19, eslint-config-next 16.4 → 14.2), que es peor. Se revisan cuando esas herramientas publiquen version. |
 | Las copias viven en el mismo servidor | Si falla el disco se pierden con todo. Conviene bajarlas de vez en cuando. |
 
 ---
 
 ## Estado de la verificación
 
-`npm run lint` pasa en ambos workspaces, **106 pruebas automáticas** en verde
-(61 del API, 45 de la web) y el build compila incluyendo el chequeo de tipos.
+`npm run lint` pasa en ambos workspaces, **140 pruebas automáticas** en verde
+(87 del API, 53 de la web) y el build compila incluyendo el chequeo de tipos.
+
+Ninguna de esas pruebas toca componentes: `apps/web` no tiene jsdom ni
+testing-library, a proposito. Los fallos de este proyecto han sido de calculo
+—fechas, zonas horarias, rangos— y ese nivel si esta cubierto; lo que queda
+fuera son los cambios visuales, que van a la lista de comprobaciones
+manuales.
 
 Comprobado contra el sitio en producción: HTTPS con certificado válido, el
 catálogo carga, el panel exige sesión, los festivos cierran la agenda, y las
